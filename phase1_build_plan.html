@@ -1,0 +1,153 @@
+
+<style>
+  .week-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; cursor: pointer; transition: border-color .2s; }
+  .week-card:hover { border-color: var(--color-border-secondary); }
+  .week-card.active { border-color: var(--color-border-primary); }
+  .week-header { display: flex; align-items: center; gap: 12px; }
+  .week-badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .badge-purple { background: #EEEDFE; color: #3C3489; }
+  .badge-teal   { background: #E1F5EE; color: #085041; }
+  .badge-amber  { background: #FAEEDA; color: #633806; }
+  .badge-coral  { background: #FAECE7; color: #712B13; }
+  @media (prefers-color-scheme: dark) {
+    .badge-purple { background: #3C3489; color: #CECBF6; }
+    .badge-teal   { background: #085041; color: #9FE1CB; }
+    .badge-amber  { background: #633806; color: #FAC775; }
+    .badge-coral  { background: #712B13; color: #F5C4B3; }
+  }
+  .week-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+  .week-sub { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+  .expand-icon { margin-left: auto; font-size: 16px; color: var(--color-text-tertiary); transition: transform .2s; }
+  .week-card.active .expand-icon { transform: rotate(180deg); }
+  .week-body { display: none; margin-top: 14px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 14px; }
+  .week-card.active .week-body { display: block; }
+  .day-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+  .day-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .dot-purple { background: #7F77DD; }
+  .dot-teal   { background: #1D9E75; }
+  .dot-amber  { background: #BA7517; }
+  .dot-coral  { background: #D85A30; }
+  .day-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); min-width: 56px; margin-top: 1px; }
+  .day-task { font-size: 13px; color: var(--color-text-primary); line-height: 1.5; }
+  .day-note { font-size: 12px; color: var(--color-text-tertiary); margin-top: 2px; }
+  .deliverable { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; margin-top: 12px; font-size: 13px; color: var(--color-text-secondary); display: flex; gap: 8px; align-items: flex-start; }
+  .deliver-icon { font-size: 14px; margin-top: 1px; }
+  .phase-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: .04em; text-transform: uppercase; margin: 20px 0 8px; }
+  .progress-bar { height: 3px; background: var(--color-border-tertiary); border-radius: 2px; margin-bottom: 20px; }
+  .progress-fill { height: 100%; border-radius: 2px; background: #7F77DD; transition: width .3s; }
+  .ask-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-info); background: none; border: 0.5px solid var(--color-border-info); border-radius: 20px; padding: 4px 12px; cursor: pointer; margin-top: 10px; }
+  .ask-btn:hover { background: var(--color-background-info); }
+</style>
+
+<div style="padding: 0.5rem 0 1rem">
+  <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0 0 4px">Phase 1 — Multi-agent research pipeline</p>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width: 0%"></div></div>
+
+  <div class="phase-label">Foundation</div>
+
+  <div class="week-card" onclick="toggle(this)">
+    <div class="week-header">
+      <span class="week-badge badge-purple">Week 1</span>
+      <div><div class="week-title">Project skeleton + state design</div><div class="week-sub">Define graph, state schema, agent roles</div></div>
+      <span class="expand-icon">▾</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row"><span class="day-dot dot-purple"></span><span class="day-label">Day 1–2</span><div><div class="day-task">Define the LangGraph state schema. What does the graph need to know at every step? Topic, search results, synthesis draft, follow-up questions, final report. Write this as a TypedDict — not code yet, just the shape.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-purple"></span><span class="day-label">Day 3–4</span><div><div class="day-task">Scaffold the graph with 3 empty nodes: <code>search_agent</code>, <code>synthesis_agent</code>, <code>report_agent</code>. Wire edges between them. Add a <code>human_review</code> interrupt after synthesis. Run it end-to-end with stub functions — the flow should work before any real logic exists.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-purple"></span><span class="day-label">Day 5</span><div><div class="day-task">Write a test that runs the full graph with a fixed topic. Assert each node receives the right state slice. You want a safety net before adding real LLM calls.</div></div></div>
+      <div class="deliverable"><span class="deliver-icon">◎</span><span>Deliverable: runnable graph skeleton, typed state, one passing integration test</span></div>
+      <button class="ask-btn" onclick="sendPrompt('Give me a code example for designing the LangGraph state schema for a multi-agent research pipeline')">Ask for code example ↗</button>
+    </div>
+  </div>
+
+  <div class="week-card" onclick="toggle(this)">
+    <div class="week-header">
+      <span class="week-badge badge-purple">Week 2</span>
+      <div><div class="week-title">Search agent — tools + structured output</div><div class="week-sub">Web search, result parsing, gap detection</div></div>
+      <span class="expand-icon">▾</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row"><span class="day-dot dot-purple"></span><span class="day-label">Day 1–2</span><div><div class="day-task">Implement the search agent with Claude tool-use. Give it 2 tools: <code>web_search</code> and <code>fetch_page</code>. The agent decides how many searches to run. Use <code>model_router</code> to let it call tools in a loop until it has enough context.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-purple"></span><span class="day-label">Day 3</span><div><div class="day-task">Force structured output: the agent must return a Pydantic model with <code>findings: list[Finding]</code>, <code>gaps: list[str]</code>, <code>sources: list[Source]</code>. Use <code>with_structured_output()</code>. No freeform text leaving this node.</div><div class="day-note">This is where most people skip validation — don't.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-purple"></span><span class="day-label">Day 4–5</span><div><div class="day-task">Add retry logic. If structured output fails validation, retry once with a corrective prompt. Log failures. This is your first taste of reliability engineering — the skill that separates production agents from demos.</div></div></div>
+      <div class="deliverable"><span class="deliver-icon">◎</span><span>Deliverable: search agent that returns validated structured output with retry on failure</span></div>
+      <button class="ask-btn" onclick="sendPrompt('Show me how to implement structured output with retry in a LangGraph node using Claude tool-use')">Ask for code example ↗</button>
+    </div>
+  </div>
+
+  <div class="phase-label">Core logic</div>
+
+  <div class="week-card" onclick="toggle(this)">
+    <div class="week-header">
+      <span class="week-badge badge-teal">Week 3</span>
+      <div><div class="week-title">Synthesis agent + follow-up loop</div><div class="week-sub">Multi-turn reasoning, gap filling</div></div>
+      <span class="expand-icon">▾</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row"><span class="day-dot dot-teal"></span><span class="day-label">Day 1–2</span><div><div class="day-task">Build the synthesis agent. It takes search results and produces a draft with explicit knowledge gaps. It should also generate 2–3 follow-up search queries for the gaps it found.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-teal"></span><span class="day-label">Day 3</span><div><div class="day-task">Add a conditional edge: if gaps exist and loop count is under 2, route back to the search agent with the follow-up queries. This is the agentic loop — the hardest concept to get right. Control the loop count in state, not in the agent.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-teal"></span><span class="day-label">Day 4–5</span><div><div class="day-task">Test with 3 different topics. Watch how the loop behaves. Does it over-search? Under-search? Tune the gap detection prompt. The goal: 1–2 loop iterations for most topics, not 0 and not infinite.</div></div></div>
+      <div class="deliverable"><span class="deliver-icon">◎</span><span>Deliverable: working synthesis loop with controlled iteration, conditional routing</span></div>
+      <button class="ask-btn" onclick="sendPrompt('How do I implement a conditional looping edge in LangGraph that routes back to a previous node with a counter limit?')">Ask for code example ↗</button>
+    </div>
+  </div>
+
+  <div class="week-card" onclick="toggle(this)">
+    <div class="week-header">
+      <span class="week-badge badge-teal">Week 4</span>
+      <div><div class="week-title">Human-in-the-loop checkpoint</div><div class="week-sub">Interrupt, review, resume pattern</div></div>
+      <span class="expand-icon">▾</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row"><span class="day-dot dot-teal"></span><span class="day-label">Day 1–2</span><div><div class="day-task">Implement the HITL checkpoint after synthesis using LangGraph's <code>interrupt()</code>. Show the human the draft + gaps. They can approve, edit the draft, or add more search queries. This is the most impressive feature to demo — it shows you understand agentic vs automated.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-teal"></span><span class="day-label">Day 3</span><div><div class="day-task">Persist state with <code>MemorySaver</code> so the graph can be paused and resumed across Python process restarts. You should be able to kill the process, restart, and resume from the checkpoint. This is table stakes for production agents.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-teal"></span><span class="day-label">Day 4–5</span><div><div class="day-task">Build a dead-simple CLI interface for the HITL step. Not a UI — just a prompt that shows the draft and takes input. Focus on the pattern, not the presentation.</div></div></div>
+      <div class="deliverable"><span class="deliver-icon">◎</span><span>Deliverable: pausable graph with persistent checkpoints, working HITL review step</span></div>
+      <button class="ask-btn" onclick="sendPrompt('Show me how to implement human-in-the-loop with interrupt() and MemorySaver in LangGraph')">Ask for code example ↗</button>
+    </div>
+  </div>
+
+  <div class="phase-label">Polish + depth</div>
+
+  <div class="week-card" onclick="toggle(this)">
+    <div class="week-header">
+      <span class="week-badge badge-amber">Week 5</span>
+      <div><div class="week-title">Report agent + output quality</div><div class="week-sub">Final report, citations, formatting</div></div>
+      <span class="expand-icon">▾</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row"><span class="day-dot dot-amber"></span><span class="day-label">Day 1–2</span><div><div class="day-task">Build the report agent. It takes the approved synthesis and produces a clean markdown report with sections, inline citations, and a source list. The report should be usable by a non-technical person.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-amber"></span><span class="day-label">Day 3</span><div><div class="day-task">Add report templates: "executive brief" (1 page, key points only) vs "deep dive" (full report with all sources). The user picks at graph initialization. This teaches you parameterized graph behavior.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-amber"></span><span class="day-label">Day 4–5</span><div><div class="day-task">Run the full pipeline on 5 real topics. Save inputs and outputs. These become your eval dataset next week. Don't skip this — you'll need real examples to measure improvement.</div></div></div>
+      <div class="deliverable"><span class="deliver-icon">◎</span><span>Deliverable: polished report output in 2 formats, 5 real end-to-end runs saved</span></div>
+    </div>
+  </div>
+
+  <div class="week-card" onclick="toggle(this)">
+    <div class="week-header">
+      <span class="week-badge badge-coral">Week 6</span>
+      <div><div class="week-title">Evals, cost tracking, final polish</div><div class="week-sub">Measure quality, optimize, make it showable</div></div>
+      <span class="expand-icon">▾</span>
+    </div>
+    <div class="week-body">
+      <div class="day-row"><span class="day-dot dot-coral"></span><span class="day-label">Day 1–2</span><div><div class="day-task">Write a simple eval script using your 5 saved runs. For each run, score: (1) source quality (are citations real?), (2) coverage (did it address the topic?), (3) loop efficiency (how many iterations?). Simple heuristics are fine — the habit of measuring is what matters.</div></div></div>
+      <div class="day-row"><span class="day-dot dot-coral"></span><span class="day-label">Day 3</span><div><div class="day-task">Add token tracking per node. You should know exactly what each step costs and how long it takes. Log this to a simple JSON file per run. Two questions to answer: which node is the most expensive? Which is the slowest?</div></div></div>
+      <div class="day-row"><span class="day-dot dot-coral"></span><span class="day-label">Day 4–5</span><div><div class="day-task">Write a short README covering: what it does, how to run it, one real example with actual output. Record a 2-minute screen demo walking through a run. This is your portfolio artifact. If someone asks what you've built with LangGraph, you send this link.</div></div></div>
+      <div class="deliverable"><span class="deliver-icon">◎</span><span>Deliverable: eval script, cost tracking, documented repo, screen demo recorded</span></div>
+      <button class="ask-btn" onclick="sendPrompt('What should I include in my README and screen demo to make this LangGraph project impressive to a potential employer or client?')">Ask what to show ↗</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggle(card) {
+  card.classList.toggle('active');
+  updateProgress();
+}
+function updateProgress() {
+  const cards = document.querySelectorAll('.week-card');
+  const open = [...cards].filter(c => c.classList.contains('active')).length;
+  document.getElementById('prog').style.width = (open / cards.length * 100) + '%';
+}
+</script>
