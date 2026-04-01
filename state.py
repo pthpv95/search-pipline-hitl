@@ -88,6 +88,10 @@ class TokenUsage(BaseModel):
     def total(self) -> int:
         return self.search_agent + self.synthesis_agent + self.report_agent
 
+    def add(self, **kwargs: int) -> "TokenUsage":
+        updates = {k: getattr(self, k) + v for k, v in kwargs.items()}
+        return self.model_copy(update=updates)
+
 
 class NodeTiming(BaseModel):
     search_agent: float = 0.0
@@ -103,6 +107,10 @@ class NodeTiming(BaseModel):
             + self.report_agent
             + self.human_review
         )
+
+    def add(self, **kwargs: float) -> "NodeTiming":
+        updates = {k: getattr(self, k) + v for k, v in kwargs.items()}
+        return self.model_copy(update=updates)
 
 
 class RunMetadata(BaseModel):

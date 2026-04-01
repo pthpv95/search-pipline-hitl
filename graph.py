@@ -13,14 +13,12 @@ from state import (
     Finding,
     GraphStatus,
     HumanReview,
-    NodeTiming,
     ReportFormat,
     ResearchState,
     RunMetadata,
     SearchResult,
     Source,
     SynthesisDraft,
-    TokenUsage,
 )
 
 
@@ -72,17 +70,8 @@ def search_agent(state: ResearchState) -> dict:
         "search_results": state.search_results + [fake_result],
         "loop_count": state.loop_count + 1,
         "status": GraphStatus.SYNTHESIZING,
-        "token_usage": TokenUsage(
-            search_agent=state.token_usage.search_agent + fake_result.tokens_used,
-            synthesis_agent=state.token_usage.synthesis_agent,
-            report_agent=state.token_usage.report_agent,
-        ),
-        "node_timings": NodeTiming(
-            search_agent=state.node_timings.search_agent + 0.11,
-            synthesis_agent=state.node_timings.synthesis_agent,
-            report_agent=state.node_timings.report_agent,
-            human_review=state.node_timings.human_review,
-        ),
+        "token_usage": state.token_usage.add(search_agent=fake_result.tokens_used),
+        "node_timings": state.node_timings.add(search_agent=0.11),
     }
 
 
@@ -110,17 +99,8 @@ def synthesis_agent(state: ResearchState) -> dict:
         "synthesis_draft": draft,
         "current_queries": remaining_gaps,
         "status": GraphStatus.SEARCHING if needs_more else GraphStatus.AWAITING_HUMAN,
-        "token_usage": TokenUsage(
-            search_agent=state.token_usage.search_agent,
-            synthesis_agent=state.token_usage.synthesis_agent + 400,
-            report_agent=state.token_usage.report_agent,
-        ),
-        "node_timings": NodeTiming(
-            search_agent=state.node_timings.search_agent,
-            synthesis_agent=state.node_timings.synthesis_agent + 0.07,
-            report_agent=state.node_timings.report_agent,
-            human_review=state.node_timings.human_review,
-        ),
+        "token_usage": state.token_usage.add(synthesis_agent=400),
+        "node_timings": state.node_timings.add(synthesis_agent=0.07),
     }
 
 
@@ -129,12 +109,7 @@ def human_review_node(state: ResearchState) -> dict:
     return {
         "human_review": HumanReview(approved=True),
         "status": GraphStatus.WRITING_REPORT,
-        "node_timings": NodeTiming(
-            search_agent=state.node_timings.search_agent,
-            synthesis_agent=state.node_timings.synthesis_agent,
-            report_agent=state.node_timings.report_agent,
-            human_review=state.node_timings.human_review + 0.01,
-        ),
+        "node_timings": state.node_timings.add(human_review=0.01),
     }
 
 
@@ -174,17 +149,8 @@ def report_agent(state: ResearchState) -> dict:
     return {
         "final_report": report,
         "status": GraphStatus.COMPLETE,
-        "token_usage": TokenUsage(
-            search_agent=state.token_usage.search_agent,
-            synthesis_agent=state.token_usage.synthesis_agent,
-            report_agent=state.token_usage.report_agent + 800,
-        ),
-        "node_timings": NodeTiming(
-            search_agent=state.node_timings.search_agent,
-            synthesis_agent=state.node_timings.synthesis_agent,
-            report_agent=state.node_timings.report_agent + 0.09,
-            human_review=state.node_timings.human_review,
-        ),
+        "token_usage": state.token_usage.add(report_agent=800),
+        "node_timings": state.node_timings.add(report_agent=0.09),
     }
 
 
@@ -242,7 +208,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print(f"Status:       {final['status']}")
     print(f"Search loops: {final['loop_count']}")
-    print(f"Findings:     {len(final['search_results']) and len(final['search_results'][0].findings) or 0}")
+    print(f"Findings:     {sum(len(r.findings) for r in final['search_results'])}")
     print(f"Sources:      {len(final['final_report'].sources) if final['final_report'] else 0}")
     print(f"Tokens used:  {final['token_usage'].total}")
     print(f"Errors:       {', '.join(final['errors']) if final['errors'] else 'none'}")
