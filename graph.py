@@ -8,6 +8,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from agents.search import run_search_agent
+from agents.synthesis import run_synthesis_agent
 from config import DEFAULT_CONFIG
 from state import (
     FinalReport,
@@ -25,32 +26,7 @@ def search_agent(state: ResearchState) -> dict:
 
 
 def synthesis_agent(state: ResearchState) -> dict:
-    print(f"\n[synthesis_agent] findings={len(state.all_findings)}")
-
-    needs_more = state.loop_count < state.max_loops
-    remaining_gaps = state.search_results[-1].gaps if needs_more and state.search_results else []
-    limitations = [] if needs_more else ["Loop cap reached; proceeding with available evidence."]
-
-    draft = SynthesisDraft(
-        draft=(
-            f"## Synthesis of {state.topic}\n\n"
-            f"Search rounds: {len(state.search_results)}\n"
-            f"Findings collected: {len(state.all_findings)}\n\n"
-            f"- {state.all_findings[0].content if state.all_findings else 'No findings available.'}\n"
-        ),
-        remaining_gaps=remaining_gaps,
-        confidence=0.78,
-        needs_more_search=needs_more,
-        limitations=limitations,
-    )
-
-    return {
-        "synthesis_draft": draft,
-        "current_queries": remaining_gaps,
-        "status": GraphStatus.SEARCHING if needs_more else GraphStatus.AWAITING_HUMAN,
-        "token_usage": state.token_usage.add(synthesis_agent=400),
-        "node_timings": state.node_timings.add(synthesis_agent=0.07),
-    }
+    return run_synthesis_agent(state, config=DEFAULT_CONFIG)
 
 
 def human_review_node(state: ResearchState) -> dict:

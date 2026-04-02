@@ -2,33 +2,33 @@
 
 ## Week 1
 
-- [ ] Add `config.py`
-- [ ] Finalize `ResearchState` and supporting models
-- [ ] Add computed helpers and error helper
-- [ ] Wire stub graph with conditional routing
-- [ ] Add deterministic stub timing and token values
-- [ ] Add `.env.example`
-- [ ] Split tests into `tests/test_state.py` and `tests/test_graph.py`
-- [ ] Verify `python graph.py`
-- [ ] Verify `pytest`
+- [x] Add `config.py`
+- [x] Finalize `ResearchState` and supporting models
+- [x] Add computed helpers and error helper
+- [x] Wire stub graph with conditional routing
+- [x] Add deterministic stub timing and token values
+- [x] Add `.env.example`
+- [x] Split tests into `tests/test_state.py` and `tests/test_graph.py`
+- [x] Verify `python graph.py`
+- [x] Verify `pytest`
 
 ## Week 2
 
-- [ ] Build `tools/web.py`
-- [ ] Support one real search provider
-- [ ] Add `dev`-only mock fallback
-- [ ] Implement `agents/search.py`
-- [ ] Add structured output validation and retry
-- [ ] Track real token usage when available
-- [ ] Add search-agent tests
+- [x] Build `tools/web.py`
+- [x] Support one real search provider
+- [x] Add `dev`-only mock fallback
+- [x] Implement `agents/search.py`
+- [x] Add structured output validation and retry
+- [x] Track real token usage when available
+- [x] Add search-agent tests
 
 ## Week 3
 
-- [ ] Implement `agents/synthesis.py`
-- [ ] Add actionable gap detection
-- [ ] Refine loop routing logic
-- [ ] Record limitations when loop cap is reached
-- [ ] Add synthesis-loop tests
+- [x] Implement `agents/synthesis.py`
+- [x] Add actionable gap detection
+- [x] Refine loop routing logic
+- [x] Record limitations when loop cap is reached
+- [x] Add synthesis-loop tests
 
 ## Week 4
 

@@ -60,6 +60,7 @@ class SynthesisDraft(BaseModel):
     remaining_gaps: list[str] = Field(default_factory=list)
     confidence: float = Field(default=0.8, ge=0.0, le=1.0)
     needs_more_search: bool = False
+    follow_up_queries: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
 
 
