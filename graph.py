@@ -1,5 +1,5 @@
 """
-graph.py — Week 1 graph skeleton with deterministic stub agents.
+graph.py — LangGraph research pipeline.
 """
 
 from __future__ import annotations
@@ -7,72 +7,21 @@ from __future__ import annotations
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
+from agents.search import run_search_agent
 from config import DEFAULT_CONFIG
 from state import (
     FinalReport,
-    Finding,
     GraphStatus,
     HumanReview,
     ReportFormat,
     ResearchState,
     RunMetadata,
-    SearchResult,
-    Source,
     SynthesisDraft,
 )
 
 
 def search_agent(state: ResearchState) -> dict:
-    print(f"\n[search_agent] topic={state.topic}")
-    print(f"[search_agent] loop={state.loop_count + 1}/{state.max_loops}")
-
-    query_seed = state.current_queries or [state.topic]
-    query_label = ", ".join(query_seed)
-
-    fake_result = SearchResult(
-        findings=[
-            Finding(
-                content=f"Stub finding about {state.topic} based on query {query_label}.",
-                source_url="https://example.com/article-1",
-                confidence=0.86,
-            ),
-            Finding(
-                content=f"Stub comparison signal for {state.topic}.",
-                source_url="https://example.com/article-2",
-                confidence=0.74,
-            ),
-        ],
-        gaps=[
-            f"What are the long-term implications of {state.topic}?",
-            f"How does {state.topic} compare with common alternatives?",
-        ],
-        follow_up_queries=[
-            f"{state.topic} long-term implications",
-            f"{state.topic} comparison alternatives",
-        ],
-        sources=[
-            Source(
-                url="https://example.com/article-1",
-                title="Example Article 1",
-                snippet="A stub source used for local graph validation.",
-            ),
-            Source(
-                url="https://example.com/article-2",
-                title="Example Article 2",
-                snippet="A second stub source used for local graph validation.",
-            ),
-        ],
-        reasoning="Stub search result for Week 1 graph validation.",
-        tokens_used=1200,
-    )
-
-    return {
-        "search_results": state.search_results + [fake_result],
-        "loop_count": state.loop_count + 1,
-        "status": GraphStatus.SYNTHESIZING,
-        "token_usage": state.token_usage.add(search_agent=fake_result.tokens_used),
-        "node_timings": state.node_timings.add(search_agent=0.11),
-    }
+    return run_search_agent(state, config=DEFAULT_CONFIG)
 
 
 def synthesis_agent(state: ResearchState) -> dict:
