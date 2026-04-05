@@ -1,0 +1,43 @@
+{
+  "saved_at": "20260405T103725Z",
+  "topic": "AI agent memory architectures",
+  "mode": "dev",
+  "status": "complete",
+  "loop_count": 1,
+  "errors": [],
+  "limitations": [
+    "Loop cap reached; proceeding with available evidence."
+  ],
+  "token_usage": {
+    "search_agent": 0,
+    "synthesis_agent": 0,
+    "report_agent": 0,
+    "total": 0
+  },
+  "node_timings": {
+    "search_agent": 2.4875043891370296e-05,
+    "synthesis_agent": 1.3542012311518192e-05,
+    "report_agent": 1.6666017472743988e-05,
+    "human_review": 0.01,
+    "total": 0.010055083073675633
+  },
+  "run_metadata": {
+    "model_name": "claude-sonnet-4-20250514",
+    "search_provider": "tavily",
+    "thread_id": "run-20260405T103725Z"
+  },
+  "final_report": {
+    "title": "AI agent memory architectures",
+    "executive_summary": "Research on AI agent memory architectures with 2 sources.",
+    "body": "# AI agent memory architectures\n\n## Executive Summary\n\nThis report presents findings on AI agent memory architectures based on 2 sources [1].\n\n## Analysis\n\n## Synthesis of AI agent memory architectures\n\nSearch rounds completed: 1\nFindings collected: 1\n\n- Stub finding from search on 'AI agent memory architectures'\n\nThe research draws from 2 sources [1], providing a comprehensive view of the topic.\n\n## Limitations\n\n- Loop cap reached; proceeding with available evidence.\n\n## Sources\n\n- [1] [Mock result for: AI agent memory architectures](https://example.com/mock-1)\n- [2] [Mock secondary result for: AI agent memory architectures](https://example.com/mock-2)",
+    "format": "deep_dive",
+    "word_count": 93,
+    "sources": [
+      {
+        "url": "https://example.com/mock-1",
+        "title": "Mock result for: AI agent memory architectures",
+        "snippet": "This is a mock search result about AI agent memory architectures. Used for local dev only."
+      }
+    ]
+  }
+}

@@ -32,11 +32,11 @@
 
 ## Week 4
 
-- [ ] Implement `agents/report.py`
-- [ ] Add `run_pipeline.py`
-- [ ] Persist completed runs as JSON
-- [ ] Enforce citation integrity
-- [ ] Add report and persistence tests
+- [x] Implement `agents/report.py`
+- [x] Add `run_pipeline.py`
+- [x] Persist completed runs as JSON
+- [x] Enforce citation integrity
+- [x] Add report and persistence tests
 
 ## Week 5
 
