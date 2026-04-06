@@ -293,6 +293,30 @@ class TestInterruptResume:
         # Should have done 2 loops
         assert result["loop_count"] == 2
 
+    def test_edited_draft_preserved_through_query_loop(self):
+        """When reviewer edits draft AND requests queries, the edit survives the extra loop."""
+        graph, config, state, _ = _run_until_interrupt(max_loops=2)
+        # Edit + additional queries
+        result = graph.invoke(
+            Command(resume={
+                "action": "edit",
+                "edited_draft": "PRESERVED EDIT",
+                "additional_queries": ["follow up query"],
+            }),
+            config=config,
+        )
+        # Should interrupt again after the extra search loop
+        state = graph.get_state(config)
+        if state.next:
+            # Second interrupt — plain approve (no new edit)
+            result = graph.invoke(
+                Command(resume={"action": "approve"}),
+                config=config,
+            )
+        assert result["status"] == GraphStatus.COMPLETE
+        # The edited draft should have survived the second review round
+        assert "PRESERVED EDIT" in result["final_report"].body
+
     def test_additional_queries_at_loop_cap_skips_search(self):
         """When at loop cap, additional queries are ignored and pipeline proceeds to report."""
         graph, config, state, _ = _run_until_interrupt(max_loops=1)
