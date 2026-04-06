@@ -1,0 +1,43 @@
+{
+  "saved_at": "20260406T150424Z",
+  "topic": "impact of AI on office jobs",
+  "mode": "dev",
+  "status": "complete",
+  "loop_count": 2,
+  "errors": [],
+  "limitations": [
+    "Loop cap reached; proceeding with available evidence."
+  ],
+  "token_usage": {
+    "search_agent": 0,
+    "synthesis_agent": 0,
+    "report_agent": 0,
+    "total": 0
+  },
+  "node_timings": {
+    "search_agent": 0.00019212497863918543,
+    "synthesis_agent": 0.0002454170025885105,
+    "report_agent": 0.00017133296933025122,
+    "human_review": 0.00025029201060533524,
+    "total": 0.0008591669611632824
+  },
+  "run_metadata": {
+    "model_name": "claude-sonnet-4-20250514",
+    "search_provider": "tavily",
+    "thread_id": "cli-20260406T150246Z"
+  },
+  "final_report": {
+    "title": "impact of AI on office jobs",
+    "executive_summary": "Research on impact of AI on office jobs with 2 sources.",
+    "body": "# impact of AI on office jobs\n\n## Executive Summary\n\nThis report presents findings on impact of AI on office jobs based on 2 sources [1].\n\n## Analysis\n\nneed to do more research on different job\n\nThe research draws from 2 sources [1], providing a comprehensive view of the topic.\n\n## Limitations\n\n- Loop cap reached; proceeding with available evidence.\n\n## Sources\n\n- [1] [Mock result for: impact of AI on office jobs](https://example.com/mock-1)\n- [2] [Mock secondary result for: impact of AI on office jobs](https://example.com/mock-2)",
+    "format": "deep_dive",
+    "word_count": 85,
+    "sources": [
+      {
+        "url": "https://example.com/mock-1",
+        "title": "Mock result for: impact of AI on office jobs",
+        "snippet": "This is a mock search result about impact of AI on office jobs. Used for local dev only."
+      }
+    ]
+  }
+}
