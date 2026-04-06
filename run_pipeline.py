@@ -19,10 +19,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import Command
 
 from config import AppConfig
 from graph import compile_graph
-from state import ReportFormat, ResearchState, RunMetadata, RunMode
+from state import GraphStatus, ReportFormat, ResearchState, RunMetadata, RunMode
 
 RUNS_DIR = Path(__file__).parent / "runs"
 
@@ -150,7 +151,15 @@ def run_pipeline(
         ),
     )
 
+    # Run until interrupt (human review) or completion
     result = graph.invoke(initial_state, config=config)
+
+    # Auto-approve if interrupted at human review
+    state = graph.get_state(config)
+    while state.next:
+        print("\n[run_pipeline] auto-approving human review")
+        result = graph.invoke(Command(resume={"action": "approve"}), config=config)
+        state = graph.get_state(config)
 
     print("\n" + "=" * 60)
     print(f"Status:       {result['status']}")

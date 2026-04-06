@@ -7,13 +7,13 @@ from __future__ import annotations
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
+from agents.human_review import run_human_review
 from agents.report import run_report_agent
 from agents.search import run_search_agent
 from agents.synthesis import run_synthesis_agent
 from config import DEFAULT_CONFIG
 from state import (
     GraphStatus,
-    HumanReview,
     ResearchState,
     RunMetadata,
 )
@@ -28,12 +28,7 @@ def synthesis_agent(state: ResearchState) -> dict:
 
 
 def human_review_node(state: ResearchState) -> dict:
-    print("\n[human_review] auto-approving stub draft")
-    return {
-        "human_review": HumanReview(approved=True),
-        "status": GraphStatus.WRITING_REPORT,
-        "node_timings": state.node_timings.add(human_review=0.01),
-    }
+    return run_human_review(state)
 
 
 def report_agent(state: ResearchState) -> dict:
@@ -48,6 +43,24 @@ def route_after_synthesis(state: ResearchState) -> str:
     return "human_review"
 
 
+def route_after_review(state: ResearchState) -> str:
+    """Route based on human review outcome."""
+    review = state.human_review
+    if review is None:
+        return "report_agent"
+
+    if review.rejected:
+        print("\n[router] review rejected; ending pipeline")
+        return END
+
+    if review.additional_queries and state.loop_count < state.max_loops:
+        print(f"\n[router] reviewer requested additional queries; returning to search_agent")
+        return "search_agent"
+
+    print("\n[router] review approved; continuing to report_agent")
+    return "report_agent"
+
+
 def build_graph() -> StateGraph:
     builder = StateGraph(ResearchState)
     builder.add_node("search_agent", search_agent)
@@ -57,7 +70,6 @@ def build_graph() -> StateGraph:
 
     builder.set_entry_point("search_agent")
     builder.add_edge("search_agent", "synthesis_agent")
-    builder.add_edge("human_review", "report_agent")
     builder.add_edge("report_agent", END)
     builder.add_conditional_edges(
         "synthesis_agent",
@@ -65,6 +77,15 @@ def build_graph() -> StateGraph:
         {
             "search_agent": "search_agent",
             "human_review": "human_review",
+        },
+    )
+    builder.add_conditional_edges(
+        "human_review",
+        route_after_review,
+        {
+            "search_agent": "search_agent",
+            "report_agent": "report_agent",
+            END: END,
         },
     )
 
@@ -76,6 +97,8 @@ def compile_graph(checkpointer=None):
 
 
 if __name__ == "__main__":
+    from langgraph.types import Command
+
     graph = compile_graph(checkpointer=MemorySaver())
     config = {"configurable": {"thread_id": "week1-smoke-test"}}
     initial_state = ResearchState(
@@ -91,6 +114,14 @@ if __name__ == "__main__":
     )
 
     final = graph.invoke(initial_state, config=config)
+
+    # Auto-approve if interrupted at human review
+    state = graph.get_state(config)
+    while state.next:
+        print("\n[graph.py] auto-approving human review")
+        final = graph.invoke(Command(resume={"action": "approve"}), config=config)
+        state = graph.get_state(config)
+
     print("\n" + "=" * 60)
     print(f"Status:       {final['status']}")
     print(f"Search loops: {final['loop_count']}")

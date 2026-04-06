@@ -40,11 +40,11 @@
 
 ## Week 5
 
-- [ ] Implement `agents/human_review.py` with `interrupt(...)`
-- [ ] Add `cli_review.py`
-- [ ] Support approve, edit, query, reject flows
-- [ ] Choose persistence model and document it
-- [ ] Add checkpoint and resume tests
+- [x] Implement `agents/human_review.py` with `interrupt(...)`
+- [x] Add `cli_review.py`
+- [x] Support approve, edit, query, reject flows
+- [x] Choose persistence model and document it
+- [x] Add checkpoint and resume tests
 
 ## Week 6
 

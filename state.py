@@ -65,10 +65,12 @@ class SynthesisDraft(BaseModel):
 
 
 class HumanReview(BaseModel):
-    approved: bool
+    approved: bool = False
+    rejected: bool = False
     edited_draft: str | None = None
     additional_queries: list[str] = Field(default_factory=list)
     notes: str = ""
+    rejection_reason: str = ""
 
 
 class FinalReport(BaseModel):
