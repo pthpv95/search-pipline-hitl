@@ -61,13 +61,21 @@ def save_run(state: dict, runs_dir: Path | None = None) -> Path:
             ],
         }
 
-    # Extract token usage
+    # Extract token usage (per-node totals + input/output breakdown for cost)
     token_usage = state.get("token_usage")
     token_data = {
         "search_agent": _attr(token_usage, "search_agent"),
         "synthesis_agent": _attr(token_usage, "synthesis_agent"),
         "report_agent": _attr(token_usage, "report_agent"),
         "total": _attr(token_usage, "total"),
+        "search_agent_input": _attr(token_usage, "search_agent_input"),
+        "search_agent_output": _attr(token_usage, "search_agent_output"),
+        "synthesis_agent_input": _attr(token_usage, "synthesis_agent_input"),
+        "synthesis_agent_output": _attr(token_usage, "synthesis_agent_output"),
+        "report_agent_input": _attr(token_usage, "report_agent_input"),
+        "report_agent_output": _attr(token_usage, "report_agent_output"),
+        "total_input": _attr(token_usage, "total_input"),
+        "total_output": _attr(token_usage, "total_output"),
     } if token_usage else {}
 
     # Extract node timings
@@ -98,6 +106,7 @@ def save_run(state: dict, runs_dir: Path | None = None) -> Path:
         "mode": state.get("mode", "dev").value if hasattr(state.get("mode", "dev"), "value") else str(state.get("mode", "dev")),
         "status": state.get("status", "unknown").value if hasattr(state.get("status", "unknown"), "value") else str(state.get("status", "unknown")),
         "loop_count": state.get("loop_count", 0),
+        "max_loops": state.get("max_loops", 0),
         "errors": state.get("errors", []),
         "limitations": limitations,
         "token_usage": token_data,
@@ -168,6 +177,15 @@ def run_pipeline(
     print(f"Sources:      {len(result['final_report'].sources) if result.get('final_report') else 0}")
     print(f"Tokens used:  {result['token_usage'].total}")
     print(f"Errors:       {', '.join(result['errors']) if result['errors'] else 'none'}")
+
+    # Cost summary
+    from evals.eval import format_cost_summary
+    print()
+    print(format_cost_summary(
+        token_usage=result["token_usage"],
+        node_timings=result["node_timings"],
+        model_name=cfg.model_name,
+    ))
 
     if save:
         path = save_run(result)

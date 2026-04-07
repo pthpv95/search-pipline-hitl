@@ -83,16 +83,73 @@ class FinalReport(BaseModel):
 
 
 class TokenUsage(BaseModel):
-    search_agent: int = 0
-    synthesis_agent: int = 0
-    report_agent: int = 0
+    """Per-node token usage broken down by input vs output.
+
+    Constructor accepts either flat per-node totals (legacy) or input/output
+    fields directly. Per-node totals (`search_agent`, etc.) are exposed as
+    computed properties so existing call sites continue to work unchanged.
+    """
+
+    search_agent_input: int = 0
+    search_agent_output: int = 0
+    synthesis_agent_input: int = 0
+    synthesis_agent_output: int = 0
+    report_agent_input: int = 0
+    report_agent_output: int = 0
+
+    def __init__(self, **data: int) -> None:
+        # Backwards-compat: accept legacy `search_agent=N` form by treating it
+        # as input tokens (output stays 0). New code should pass _input/_output.
+        for legacy in ("search_agent", "synthesis_agent", "report_agent"):
+            if legacy in data:
+                value = data.pop(legacy)
+                input_key = f"{legacy}_input"
+                data[input_key] = data.get(input_key, 0) + value
+        super().__init__(**data)
+
+    @property
+    def search_agent(self) -> int:
+        return self.search_agent_input + self.search_agent_output
+
+    @property
+    def synthesis_agent(self) -> int:
+        return self.synthesis_agent_input + self.synthesis_agent_output
+
+    @property
+    def report_agent(self) -> int:
+        return self.report_agent_input + self.report_agent_output
 
     @property
     def total(self) -> int:
         return self.search_agent + self.synthesis_agent + self.report_agent
 
+    @property
+    def total_input(self) -> int:
+        return (
+            self.search_agent_input
+            + self.synthesis_agent_input
+            + self.report_agent_input
+        )
+
+    @property
+    def total_output(self) -> int:
+        return (
+            self.search_agent_output
+            + self.synthesis_agent_output
+            + self.report_agent_output
+        )
+
     def add(self, **kwargs: int) -> "TokenUsage":
-        updates = {k: getattr(self, k) + v for k, v in kwargs.items()}
+        # Accept both new (`search_agent_input=...`) and legacy (`search_agent=...`)
+        # forms. Legacy form is treated as input tokens so the test
+        # `result["token_usage"].search_agent == 450` keeps working.
+        updates: dict[str, int] = {}
+        for key, value in kwargs.items():
+            if key in {"search_agent", "synthesis_agent", "report_agent"}:
+                target = f"{key}_input"
+            else:
+                target = key
+            updates[target] = getattr(self, target) + value
         return self.model_copy(update=updates)
 
 

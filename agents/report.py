@@ -91,10 +91,10 @@ def _build_report_prompt(
     )
 
 
-def _extract_tokens(response: Any) -> int:
+def _extract_tokens(response: Any) -> tuple[int, int]:
     meta = getattr(response, "response_metadata", {}) or {}
     usage = meta.get("usage", {})
-    return usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+    return usage.get("input_tokens", 0), usage.get("output_tokens", 0)
 
 
 def _parse_tool_call(response: Any) -> ReportOutput:
@@ -174,11 +174,11 @@ def run_report_agent(
 
     if not cfg.anthropic_api_key:
         print("[report_agent] no ANTHROPIC_API_KEY, using stub report (dev mode)")
-        report_output, tokens_used = _stub_report(
+        report_output, tokens_in, tokens_out = _stub_report(
             state.topic, approved_draft, sources, state.report_format, limitations,
         )
     else:
-        report_output, tokens_used = _llm_report(
+        report_output, tokens_in, tokens_out = _llm_report(
             topic=state.topic,
             draft=approved_draft,
             sources=sources,
@@ -218,7 +218,10 @@ def run_report_agent(
         "final_report": report,
         "status": GraphStatus.COMPLETE,
         "errors": errors,
-        "token_usage": state.token_usage.add(report_agent=tokens_used),
+        "token_usage": state.token_usage.add(
+            report_agent_input=tokens_in,
+            report_agent_output=tokens_out,
+        ),
         "node_timings": state.node_timings.add(report_agent=elapsed),
     }
 
@@ -236,8 +239,8 @@ def _stub_report(
     sources: list[Source],
     report_format: ReportFormat,
     limitations: list[str],
-) -> tuple[ReportOutput, int]:
-    """Dev-mode stub report generation."""
+) -> tuple[ReportOutput, int, int]:
+    """Dev-mode stub report generation. Returns (output, input_tokens, output_tokens)."""
     source_urls = [s.url for s in sources]
 
     cite = " [1]" if sources else ""
@@ -284,7 +287,7 @@ def _stub_report(
         body=body,
         cited_source_urls=source_urls[:1] if source_urls else [],
         reasoning="Stub report — no LLM key available.",
-    ), 0
+    ), 0, 0
 
 
 def _llm_report(
@@ -294,8 +297,8 @@ def _llm_report(
     report_format: ReportFormat,
     limitations: list[str],
     cfg: AppConfig,
-) -> tuple[ReportOutput, int]:
-    """Call LLM with tool binding and corrective retry. Returns (output, tokens)."""
+) -> tuple[ReportOutput, int, int]:
+    """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
     llm = ChatAnthropic(
         model=cfg.model_name,
         api_key=cfg.anthropic_api_key,
@@ -308,16 +311,19 @@ def _llm_report(
 
     prompt = _build_report_prompt(topic, draft, sources, report_format, limitations)
     messages = [HumanMessage(content=f"{REPORT_SYSTEM}\n\n{prompt}")]
-    total_tokens = 0
+    total_in = 0
+    total_out = 0
 
     for attempt in range(1, cfg.max_retries + 2):
         response = llm_with_tool.invoke(messages)
-        total_tokens += _extract_tokens(response)
+        in_tokens, out_tokens = _extract_tokens(response)
+        total_in += in_tokens
+        total_out += out_tokens
 
         try:
             output = _parse_tool_call(response)
             print(f"[report_agent] LLM report succeeded (attempt {attempt})")
-            return output, total_tokens
+            return output, total_in, total_out
         except (ValueError, ValidationError) as e:
             if attempt > cfg.max_retries:
                 raise RuntimeError(

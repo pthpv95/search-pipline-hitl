@@ -48,9 +48,9 @@
 
 ## Week 6
 
-- [ ] Implement `evals/eval.py`
-- [ ] Save 5 real eval runs
-- [ ] Add per-node timing, token, and cost summaries
-- [ ] Update `README.md`
-- [ ] Add eval tests
-- [ ] Verify end-to-end runs in `dev`, `live`, and `eval`
+- [x] Implement `evals/eval.py`
+- [ ] Save 5 real eval runs (run `python -m evals.run_eval_topics` with API keys)
+- [x] Add per-node timing, token, and cost summaries
+- [x] Update `README.md`
+- [x] Add eval tests
+- [x] Verify end-to-end runs in `dev` (live and eval require user-provided API keys)

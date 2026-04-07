@@ -84,10 +84,10 @@ def _build_synthesis_prompt(
     )
 
 
-def _extract_tokens(response: Any) -> int:
+def _extract_tokens(response: Any) -> tuple[int, int]:
     meta = getattr(response, "response_metadata", {}) or {}
     usage = meta.get("usage", {})
-    return usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+    return usage.get("input_tokens", 0), usage.get("output_tokens", 0)
 
 
 def _parse_tool_call(response: Any) -> SynthesisOutput:
@@ -166,9 +166,9 @@ def run_synthesis_agent(
             ),
             reasoning="Stub synthesis — no LLM key available.",
         )
-        tokens_used = 0
+        tokens_in, tokens_out = 0, 0
     else:
-        synthesis_output, tokens_used = _llm_synthesize(
+        synthesis_output, tokens_in, tokens_out = _llm_synthesize(
             topic=state.topic,
             findings=findings,
             sources=sources,
@@ -210,7 +210,10 @@ def run_synthesis_agent(
         "synthesis_draft": draft,
         "current_queries": next_queries,
         "status": next_status,
-        "token_usage": state.token_usage.add(synthesis_agent=tokens_used),
+        "token_usage": state.token_usage.add(
+            synthesis_agent_input=tokens_in,
+            synthesis_agent_output=tokens_out,
+        ),
         "node_timings": state.node_timings.add(synthesis_agent=elapsed),
     }
 
@@ -223,8 +226,8 @@ def _llm_synthesize(
     max_loops: int,
     previous_gaps: list[str],
     cfg: AppConfig,
-) -> tuple[SynthesisOutput, int]:
-    """Call LLM with tool binding and corrective retry. Returns (output, tokens)."""
+) -> tuple[SynthesisOutput, int, int]:
+    """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
     llm = ChatAnthropic(
         model=cfg.model_name,
         api_key=cfg.anthropic_api_key,
@@ -239,16 +242,19 @@ def _llm_synthesize(
         topic, findings, sources, loop_count, max_loops, previous_gaps,
     )
     messages = [HumanMessage(content=f"{SYNTHESIS_SYSTEM}\n\n{prompt}")]
-    total_tokens = 0
+    total_in = 0
+    total_out = 0
 
     for attempt in range(1, cfg.max_retries + 2):  # 1 initial + max_retries
         response = llm_with_tool.invoke(messages)
-        total_tokens += _extract_tokens(response)
+        in_tokens, out_tokens = _extract_tokens(response)
+        total_in += in_tokens
+        total_out += out_tokens
 
         try:
             output = _parse_tool_call(response)
             print(f"[synthesis_agent] LLM synthesis succeeded (attempt {attempt})")
-            return output, total_tokens
+            return output, total_in, total_out
         except (ValueError, ValidationError) as e:
             if attempt > cfg.max_retries:
                 raise RuntimeError(

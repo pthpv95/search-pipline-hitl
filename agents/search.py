@@ -59,11 +59,11 @@ def _build_search_prompt(topic: str, queries: list[str], sources: list[Source]) 
     )
 
 
-def _extract_tokens(response: Any) -> int:
-    """Extract token count from an AIMessage's response metadata."""
+def _extract_tokens(response: Any) -> tuple[int, int]:
+    """Extract (input, output) token counts from an AIMessage's response metadata."""
     meta = getattr(response, "response_metadata", {}) or {}
     usage = meta.get("usage", {})
-    return usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+    return usage.get("input_tokens", 0), usage.get("output_tokens", 0)
 
 
 def _parse_tool_call(response: Any) -> SearchOutput:
@@ -138,9 +138,9 @@ def run_search_agent(
             sources=sources,
             reasoning="Stub extraction — no LLM key available.",
         )
-        tokens_used = 0
+        tokens_in, tokens_out = 0, 0
     else:
-        search_output, tokens_used = _llm_extract(
+        search_output, tokens_in, tokens_out = _llm_extract(
             topic=state.topic,
             queries=query_seed,
             sources=sources,
@@ -148,6 +148,7 @@ def run_search_agent(
         )
 
     elapsed = time.perf_counter() - t0
+    tokens_total = tokens_in + tokens_out
 
     result = SearchResult(
         findings=search_output.findings,
@@ -155,7 +156,7 @@ def run_search_agent(
         follow_up_queries=search_output.follow_up_queries,
         sources=search_output.sources,
         reasoning=search_output.reasoning,
-        tokens_used=tokens_used,
+        tokens_used=tokens_total,
     )
 
     return {
@@ -163,7 +164,10 @@ def run_search_agent(
         "loop_count": state.loop_count + 1,
         "current_queries": search_output.follow_up_queries,
         "status": GraphStatus.SYNTHESIZING,
-        "token_usage": state.token_usage.add(search_agent=tokens_used),
+        "token_usage": state.token_usage.add(
+            search_agent_input=tokens_in,
+            search_agent_output=tokens_out,
+        ),
         "node_timings": state.node_timings.add(search_agent=elapsed),
     }
 
@@ -173,8 +177,8 @@ def _llm_extract(
     queries: list[str],
     sources: list[Source],
     cfg: AppConfig,
-) -> tuple[SearchOutput, int]:
-    """Call LLM with tool binding and corrective retry. Returns (output, tokens)."""
+) -> tuple[SearchOutput, int, int]:
+    """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
     llm = ChatAnthropic(
         model=cfg.model_name,
         api_key=cfg.anthropic_api_key,
@@ -187,16 +191,19 @@ def _llm_extract(
 
     prompt = _build_search_prompt(topic, queries, sources)
     messages = [HumanMessage(content=f"{SEARCH_SYSTEM}\n\n{prompt}")]
-    total_tokens = 0
+    total_in = 0
+    total_out = 0
 
     for attempt in range(1, cfg.max_retries + 2):  # 1 initial + max_retries
         response = llm_with_tool.invoke(messages)
-        total_tokens += _extract_tokens(response)
+        in_tokens, out_tokens = _extract_tokens(response)
+        total_in += in_tokens
+        total_out += out_tokens
 
         try:
             output = _parse_tool_call(response)
             print(f"[search_agent] LLM extraction succeeded (attempt {attempt})")
-            return output, total_tokens
+            return output, total_in, total_out
         except (ValueError, ValidationError) as e:
             if attempt > cfg.max_retries:
                 raise RuntimeError(
