@@ -108,6 +108,69 @@ python -m evals.eval
 
 `evals/eval.py` scores each run on five dimensions (each in `[0.0, 1.0]`):
 
+```
+20260409T134400Z_impact_of_llms_on_software_developer_pro_24295f.json
+  topic:      impact of LLMs on software developer productivity
+  mode:       eval
+  citation:   1.00  (15/15 citations resolve)
+  sources:    1.00  (9/9 URLs valid)
+  coverage:   1.00  (100% topic terms in body)
+  supported:  0.69  (11/16 paragraphs cite sources)
+  loops:      1.00  (2/2 loops with limitations recorded)
+  overall:    0.94
+  tokens:     28,299    cost: ~$0.1910
+
+20260409T134656Z_state_of_multi_agent_ai_systems_in_2025_58f084.json
+  topic:      state of multi-agent AI systems in 2025
+  mode:       eval
+  citation:   1.00  (13/13 citations resolve)
+  sources:    1.00  (11/11 URLs valid)
+  coverage:   1.00  (100% topic terms in body)
+  supported:  0.55  (11/20 paragraphs cite sources)
+  loops:      1.00  (2/2 loops with limitations recorded)
+  overall:    0.91
+  tokens:     38,408    cost: ~$0.2353
+
+20260409T134932Z_langgraph_vs_crewai_vs_autogen_compariso_14c94f.json
+  topic:      LangGraph vs CrewAI vs AutoGen comparison
+  mode:       eval
+  citation:   1.00  (42/42 citations resolve)
+  sources:    1.00  (10/10 URLs valid)
+  coverage:   1.00  (100% topic terms in body)
+  supported:  0.92  (24/26 paragraphs cite sources)
+  loops:      1.00  (2/2 loops with limitations recorded)
+  overall:    0.98
+  tokens:     43,432    cost: ~$0.2410
+
+20260409T135231Z_prompt_engineering_techniques_for_struct_1b91b4.json
+  topic:      prompt engineering techniques for structured output
+  mode:       eval
+  citation:   0.88  (14/16 citations resolve)
+  sources:    1.00  (9/9 URLs valid)
+  coverage:   1.00  (100% topic terms in body)
+  supported:  0.65  (13/20 paragraphs cite sources)
+  loops:      1.00  (2/2 loops with limitations recorded)
+  overall:    0.91
+  tokens:     33,776    cost: ~$0.2256
+
+20260409T135511Z_ai_agent_memory_architectures_07530f.json
+  topic:      AI agent memory architectures
+  mode:       eval
+  citation:   0.86  (18/21 citations resolve)
+  sources:    1.00  (11/11 URLs valid)
+  coverage:   1.00  (100% topic terms in body)
+  supported:  0.71  (15/21 paragraphs cite sources)
+  loops:      1.00  (2/2 loops with limitations recorded)
+  overall:    0.91
+  tokens:     26,122    cost: ~$0.1753
+
+============================================================
+Runs scored:    10
+Avg overall:    0.93
+Total tokens:   340,858
+Total cost:     ~$2.1154
+```
+
 | Score                    | What it measures                                           |
 |--------------------------|------------------------------------------------------------|
 | `citation_integrity`     | Fraction of inline `[N]` markers that resolve to a source  |

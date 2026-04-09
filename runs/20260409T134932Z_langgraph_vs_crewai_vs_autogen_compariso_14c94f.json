@@ -1,0 +1,103 @@
+{
+  "saved_at": "20260409T134932Z",
+  "topic": "LangGraph vs CrewAI vs AutoGen comparison",
+  "mode": "eval",
+  "status": "complete",
+  "loop_count": 2,
+  "max_loops": 2,
+  "errors": [],
+  "limitations": [
+    "Limited quantitative performance data available in sources",
+    "Incomplete pricing information for enterprise deployments",
+    "Missing detailed technical specifications and benchmarks",
+    "Lack of comprehensive security and compliance feature analysis",
+    "Limited real-world case study examples",
+    "Insufficient data on developer productivity metrics",
+    "Missing detailed integration capabilities with enterprise tools"
+  ],
+  "token_usage": {
+    "search_agent": 30199,
+    "synthesis_agent": 8152,
+    "report_agent": 5081,
+    "total": 43432,
+    "search_agent_input": 25828,
+    "search_agent_output": 4371,
+    "synthesis_agent_input": 5645,
+    "synthesis_agent_output": 2507,
+    "report_agent_input": 2735,
+    "report_agent_output": 2346,
+    "total_input": 34208,
+    "total_output": 9224
+  },
+  "node_timings": {
+    "search_agent": 75.91599058406428,
+    "synthesis_agent": 43.640450707869604,
+    "report_agent": 35.98616158403456,
+    "human_review": 8.187489584088326e-05,
+    "total": 155.54268475086428
+  },
+  "run_metadata": {
+    "model_name": "claude-sonnet-4-20250514",
+    "search_provider": "tavily",
+    "thread_id": "run-20260409T134656Z"
+  },
+  "final_report": {
+    "title": "LangGraph vs CrewAI vs AutoGen: A Deep Dive Comparison of Leading AI Agent Frameworks",
+    "executive_summary": "Three dominant AI agent frameworks have emerged as leaders in multi-agent orchestration: LangGraph's graph-based workflows, CrewAI's role-based team structures, and AutoGen's conversational collaboration model. Each framework takes a fundamentally different approach to agent coordination, with LangGraph excelling in complex, cyclical workflows requiring sophisticated state management, CrewAI providing structured team-based processes ideal for business applications, and AutoGen focusing on conversational AI and collaborative decision-making. The choice between these frameworks depends on specific use case requirements, with hybrid approaches increasingly gaining traction for optimal results.",
+    "body": "# LangGraph vs CrewAI vs AutoGen: A Deep Dive Comparison of Leading AI Agent Frameworks\n\n## Architecture and Core Design Philosophy\n\nThe three leading AI agent frameworks represent distinct philosophical approaches to multi-agent orchestration [6]. **LangGraph** employs a graph-based architecture using stateful directed graphs with nodes and edges, enabling cyclical and adaptive agent interactions [5]. This approach provides explicit control over execution paths, checkpointing, conditional branching, and parallel processing, making it ideal for handling complex, non-linear tasks where agents can revisit tasks and adapt to changing conditions during execution [5].\n\n**CrewAI** follows a role-based autonomous team approach that mirrors real-world organizational structures [4]. Agents are assigned specialized roles in sequential or parallel workflows, with YAML-based configuration reducing coding requirements while maintaining transparency [2]. This structured coordination excels in complex business workflows where clear role definitions are essential, such as research teams, content pipelines, or customer service workflows [4].\n\n**AutoGen** focuses on conversation-driven multi-agent collaboration with dynamic context management and asynchronous communication [2]. It's designed for conversational workflows, group decision-making, debate, and consensus-building scenarios [4]. The framework thrives in collaborative tasks requiring flexible, adaptive interactions but may not suit all workflow types due to its conversational focus [8].\n\n## Memory Management Capabilities\n\nThe frameworks differ significantly in their memory management approaches, which is crucial for complex AI agent tasks [1]. **LangGraph** prioritizes customizable short-term and long-term memory solutions, offering developers fine-grained control over state persistence and memory architecture [1]. This flexibility allows for sophisticated memory strategies tailored to specific use cases.\n\n**CrewAI** provides structured built-in memory types that integrate seamlessly with its role-based architecture [1]. The memory system is designed to work within the framework's team-based paradigm, ensuring that agents can maintain context within their assigned roles and responsibilities.\n\n**AutoGen** relies primarily on message lists for short-term context and requires external integrations for long-term storage [1]. While this approach works well for conversational scenarios, it may require additional development effort for applications needing persistent memory across sessions.\n\n## Performance and Scalability Analysis\n\nPerformance characteristics vary significantly across the three frameworks. LangGraph demonstrates superior scalability compared to AutoGen for complex workflows due to its explicit execution path definition [2]. Graph-based orchestration outperforms conversational patterns in production systems requiring cyclical and adaptive agent interactions [5].\n\nAll three frameworks support multi-agent systems and human-in-the-loop interactions, but with different strengths [2]. CrewAI excels with structured role-based design, LangGraph stands out with graph-based visualization of complex interactions, and AutoGen thrives in conversational multi-agent scenarios [2].\n\nFor enterprise-scale deployments, infrastructure costs become significant across all frameworks. At scale (50,000 agent runs per month with 3 agents per workflow), organizations need to carefully consider the computational requirements and associated costs [9].\n\n## Market Adoption and Community Metrics\n\nCrewAI shows impressive adoption metrics that demonstrate its market penetration [7]. The platform has achieved 47.8K+ GitHub stars, 27M+ PyPI downloads, and 2 billion agent executions in the past 12 months [7]. Perhaps most notably, CrewAI is reportedly used by nearly half of Fortune 500 companies, indicating strong enterprise adoption [7].\n\nMicrosoft's involvement with AutoGen is significant, as the company is transitioning AutoGen to the Microsoft Agent Framework [3]. This transition indicates substantial enterprise backing and suggests continued development and support for the conversational multi-agent approach.\n\nLangGraph, as part of the broader LangChain ecosystem, benefits from strong community support and integration with existing LangChain tools and workflows [2].\n\n## Developer Experience and Learning Curve\n\nThe learning curve varies considerably across frameworks [2]. **AutoGen** offers the easiest getting started experience with a gentle learning curve, making it accessible to developers new to multi-agent systems [8]. The conversational paradigm is intuitive and requires less conceptual overhead to understand.\n\n**CrewAI** provides good documentation and examples for quick starts, with its YAML-based configuration approach reducing the amount of code required to set up complex workflows [2]. The role-based structure is familiar to developers with experience in team-based software architectures.\n\n**LangGraph** has a steeper learning curve but offers more sophisticated control for complex use cases [2]. However, documentation lags behind the framework's rapid development, which can create challenges for new adopters [3].\n\n## Commercial Considerations and Pricing\n\nPricing models differ across the frameworks, with important implications for enterprise adoption. CrewAI carries commercial licensing costs that LangChain/LangGraph does not [3]. LangGraph offers both open-source and paid tiers with enterprise support options [10].\n\nFor organizations planning large-scale deployments, the total cost of ownership includes not just licensing fees but also infrastructure costs, which become significant at scale across all frameworks [9]. The choice of framework can impact both upfront costs and ongoing operational expenses.\n\n## Framework Limitations and Challenges\n\nEach framework has distinct limitations that organizations must consider [3]. **LangGraph** faces challenges with its steep learning curve and documentation gaps, which can slow initial adoption and development velocity [3].\n\n**CrewAI** suffers from rigid structure that can limit adaptability in scenarios requiring dynamic workflow changes [3]. The role-based approach, while powerful for structured scenarios, may not accommodate all use cases effectively.\n\n**AutoGen** faces limitations due to its conversation-driven approach, which may not suit all workflow types [3]. Additionally, there are concerns about potential production delays and the framework's suitability for certain enterprise applications [3].\n\n## Emerging Trends and Hybrid Approaches\n\nAn interesting trend in the AI agent space is the emergence of hybrid approaches that combine frameworks for optimal results [3]. Organizations are increasingly using LangGraph as an orchestration backbone with CrewAI agents for specific subtasks, or employing CrewAI to manage overall processes while calling LangGraph agents for complex cyclical logic tasks [3].\n\nThis hybrid approach allows organizations to leverage the strengths of multiple frameworks while mitigating individual limitations, though it does increase system complexity and maintenance overhead.\n\n## Strategic Recommendations\n\nThe choice between these frameworks should align with specific organizational needs and use cases [8]. **LangGraph** is recommended for production-grade systems requiring sophisticated state management, fault tolerance, and complex cyclical workflows [4]. Its graph-based architecture provides the flexibility and control needed for advanced applications.\n\n**CrewAI** is ideal for business workflows with clear role definitions and structured team-based processes [4]. Organizations with well-defined operational structures and sequential workflows will find CrewAI's approach intuitive and effective.\n\n**AutoGen** should be selected for conversational AI applications, collaborative decision-making, and flexible multi-agent interactions [4]. Its strength lies in scenarios where natural conversation and consensus-building are primary requirements.\n\n## Gaps and Limitations\n\nThis analysis is constrained by several limitations in available data. There is limited quantitative performance data available for direct comparison between frameworks. Incomplete pricing information for enterprise deployments makes total cost of ownership calculations challenging. The analysis lacks detailed technical specifications, comprehensive security and compliance feature analysis, and sufficient real-world case study examples. Additionally, there is insufficient data on developer productivity metrics and detailed integration capabilities with enterprise tools, which are crucial factors for enterprise adoption decisions.",
+    "format": "deep_dive",
+    "word_count": 1125,
+    "sources": [
+      {
+        "url": "https://dev.to/foxgem/ai-agent-memory-a-comparative-analysis-of-langgraph-crewai-and-autogen-31dp",
+        "title": "AI Agent Memory: A Comparative Analysis of LangGraph, CrewAI, and AutoGen - DEV Community",
+        "snippet": "This report provides an in-depth analysis of memory management within AI agent frameworks, specifically focusing on LangGraph, CrewAI, and AutoGen. These frameworks employ distinct strategies for equipping agents with memory capabilities essential for complex tasks."
+      },
+      {
+        "url": "https://galileo.ai/blog/mastering-agents-langgraph-vs-autogen-vs-crew",
+        "title": "Mastering Agents: LangGraph Vs Autogen Vs Crew AI - Galileo AI",
+        "snippet": "In this blog, we will evaluate three prominent frameworks for building AI agents \u2014 LangGraph, Autogen, and Crew AI \u2014 to help you make an informed choice."
+      },
+      {
+        "url": "https://openagents.org/blog/posts/2026-02-23-open-source-ai-agent-frameworks-compared",
+        "title": "CrewAI vs LangGraph vs AutoGen vs OpenAgents (2026)",
+        "snippet": "In this guide, we compare four of the most prominent open source AI agent frameworks \u2014 CrewAI, LangGraph, AutoGen, and OpenAgents \u2014 across the dimensions that actually matter for production use."
+      },
+      {
+        "url": "https://www.datacamp.com/tutorial/crewai-vs-langgraph-vs-autogen",
+        "title": "CrewAI vs LangGraph vs AutoGen: Choosing the Right Multi-Agent",
+        "snippet": "Throughout this tutorial, I walked you through the foundations of multi-agent AI frameworks and explored three distinct approaches: CrewAI, LangGraph, and AutoGen."
+      },
+      {
+        "url": "https://latenode.com/blog/platform-comparisons-alternatives/automation-platform-comparisons/langgraph-vs-autogen-vs-crewai-complete-ai-agent-framework-comparison-architecture-analysis-2025",
+        "title": "LangGraph vs AutoGen vs CrewAI: Complete AI Agent Framework",
+        "snippet": "Graph-based workflows allow for cyclical and adaptive agent interactions, making it ideal for handling complex, non-linear tasks. Agents can revisit tasks and adapt to changing conditions during execution."
+      },
+      {
+        "url": "https://lushbinary.com/blog/langgraph-vs-crewai-vs-autogen-ai-agent-framework-comparison/",
+        "title": "LangGraph vs CrewAI vs AutoGen: AI Agent Framework Comparison",
+        "snippet": "Building AI agents in 2026 means choosing between three dominant frameworks: LangGraph, CrewAI, and AutoGen. Each takes a fundamentally different approach to agent orchestration \u2014 graph-based workflows, role-based teams, and multi-agent conversations."
+      },
+      {
+        "url": "https://www.getpanto.ai/blog/crewai-platform-statistics",
+        "title": "CrewAI Platform Statistics 2026: Users, Revenue & Growth",
+        "snippet": "CrewAI has quickly emerged as one of the fastest-growing platforms in the AI agent ecosystem, with 47.8K+ GitHub stars, 27M+ PyPI downloads, and 2B agent executions in 12 months."
+      },
+      {
+        "url": "https://jetthoughts.com/blog/autogen-crewai-langgraph-ai-agent-frameworks-2025/",
+        "title": "AutoGen vs CrewAI vs LangGraph: AI Framework Comparison 2025",
+        "snippet": "AutoGen, CrewAI, and LangGraph all vying for developer attention, the question isn't just which framework is 'best'\u2014it's which one aligns with your specific needs."
+      },
+      {
+        "url": "https://f3fundit.com/multi-agent-orchestration-frameworks-compared-autogen-vs-crewai-vs-agentops-2026/",
+        "title": "Multi-Agent Orchestration Frameworks Compared: AutoGen vs CrewAI vs AgentOps (2026)",
+        "snippet": "Real Cost Comparison (50K Agent Runs/Month). Assume 50,000 agent runs per month, 3 agents per workflow, average 1,500 tokens per agent call."
+      },
+      {
+        "url": "https://www.zenml.io/blog/langgraph-pricing",
+        "title": "LangGraph Pricing Guide: How Much Does It Cost?",
+        "snippet": "Chaos Labs: Edge AI Oracle used LangGraph for the multi-agent logic and ZenML for the surrounding LLMOps workflow. Jockey: Conversational Video Agent combined LangGraph graphs with ZenML infrastructure."
+      }
+    ]
+  }
+}
