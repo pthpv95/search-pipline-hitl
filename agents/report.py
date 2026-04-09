@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, ToolMessage
 from pydantic import BaseModel, Field, ValidationError
 
@@ -167,13 +167,13 @@ def run_report_agent(
     print(f"[report_agent] sources={len(sources)}, draft_len={len(approved_draft)}")
 
     # --- LLM structured report ---
-    if not cfg.anthropic_api_key and state.mode != RunMode.DEV:
+    if not cfg.openai_api_key and state.mode != RunMode.DEV:
         raise RuntimeError(
-            f"{state.mode.value} mode requires ANTHROPIC_API_KEY for report generation"
+            f"{state.mode.value} mode requires OPENAI_API_KEY for report generation"
         )
 
-    if not cfg.anthropic_api_key:
-        print("[report_agent] no ANTHROPIC_API_KEY, using stub report (dev mode)")
+    if not cfg.openai_api_key:
+        print("[report_agent] no OPENAI_API_KEY, using stub report (dev mode)")
         report_output, tokens_in, tokens_out = _stub_report(
             state.topic, approved_draft, sources, state.report_format, limitations,
         )
@@ -299,14 +299,14 @@ def _llm_report(
     cfg: AppConfig,
 ) -> tuple[ReportOutput, int, int]:
     """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
-    llm = ChatAnthropic(
+    llm = ChatOpenAI(
         model=cfg.model_name,
-        api_key=cfg.anthropic_api_key,
+        api_key=cfg.openai_api_key,
         temperature=0,
     )
     llm_with_tool = llm.bind_tools(
         [ReportOutput],
-        tool_choice={"type": "tool", "name": "ReportOutput"},
+        tool_choice="ReportOutput",
     )
 
     prompt = _build_report_prompt(topic, draft, sources, report_format, limitations)

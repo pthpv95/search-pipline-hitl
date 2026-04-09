@@ -34,20 +34,20 @@ def get_pricing(model_name: str) -> dict[str, float]:
 
 class AppConfig(BaseModel):
     mode: RunMode = RunMode.DEV
-    model_name: str = "claude-sonnet-4-20250514"
+    model_name: str = "gpt-4o-mini"
     search_provider: str = "tavily"
     report_format: ReportFormat = ReportFormat.DEEP_DIVE
     max_loops: int = 2
     max_retries: int = 2
 
     # API keys — loaded from env, optional for dev mode
-    anthropic_api_key: str = ""
+    openai_api_key: str = ""
     tavily_api_key: str = ""
 
     @classmethod
     def from_env(cls, **overrides) -> "AppConfig":
         return cls(
-            anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
             tavily_api_key=os.getenv("TAVILY_API_KEY", ""),
             **overrides,
         )

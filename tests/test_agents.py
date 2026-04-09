@@ -37,7 +37,7 @@ def _dev_config(**overrides) -> AppConfig:
 def _live_config(**overrides) -> AppConfig:
     return AppConfig(
         mode=RunMode.LIVE,
-        anthropic_api_key="test-key",
+        openai_api_key="test-key",
         tavily_api_key="test-key",
         **overrides,
     )
@@ -46,7 +46,7 @@ def _live_config(**overrides) -> AppConfig:
 def _eval_config(**overrides) -> AppConfig:
     return AppConfig(
         mode=RunMode.EVAL,
-        anthropic_api_key="test-key",
+        openai_api_key="test-key",
         tavily_api_key="test-key",
         **overrides,
     )
@@ -182,17 +182,17 @@ class TestEvalMode:
             run_search_agent(state, config=cfg)
 
     @patch("agents.search.web_search", return_value=([], "live"))
-    def test_eval_fails_without_anthropic_key(self, _mock_ws):
+    def test_eval_fails_without_openai_key(self, _mock_ws):
         state = ResearchState(topic="eval test", mode=RunMode.EVAL, max_loops=1)
-        cfg = AppConfig(mode=RunMode.EVAL, tavily_api_key="key", anthropic_api_key="")
-        with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
+        cfg = AppConfig(mode=RunMode.EVAL, tavily_api_key="key", openai_api_key="")
+        with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
             run_search_agent(state, config=cfg)
 
     @patch("agents.search.web_search", return_value=([], "live"))
-    def test_live_fails_without_anthropic_key(self, _mock_ws):
+    def test_live_fails_without_openai_key(self, _mock_ws):
         state = ResearchState(topic="live test", mode=RunMode.LIVE, max_loops=1)
-        cfg = AppConfig(mode=RunMode.LIVE, tavily_api_key="key", anthropic_api_key="")
-        with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
+        cfg = AppConfig(mode=RunMode.LIVE, tavily_api_key="key", openai_api_key="")
+        with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
             run_search_agent(state, config=cfg)
 
 
@@ -202,7 +202,7 @@ class TestEvalMode:
 
 class TestRetryLogic:
     @patch("agents.search.web_search")
-    @patch("agents.search.ChatAnthropic")
+    @patch("agents.search.ChatOpenAI")
     def test_succeeds_on_first_attempt(self, mock_llm_cls, mock_web_search):
         mock_web_search.return_value = ([], "live")
         mock_llm = MagicMock()
@@ -222,7 +222,7 @@ class TestRetryLogic:
         assert bound.invoke.call_count == 1
 
     @patch("agents.search.web_search")
-    @patch("agents.search.ChatAnthropic")
+    @patch("agents.search.ChatOpenAI")
     def test_retries_on_prose_then_succeeds(self, mock_llm_cls, mock_web_search):
         from langchain_core.messages import HumanMessage as HM, ToolMessage as TM
 
@@ -250,7 +250,7 @@ class TestRetryLogic:
         assert not any(isinstance(m, TM) for m in retry_messages)
 
     @patch("agents.search.web_search")
-    @patch("agents.search.ChatAnthropic")
+    @patch("agents.search.ChatOpenAI")
     def test_retry_exhaustion_raises(self, mock_llm_cls, mock_web_search):
         mock_web_search.return_value = ([], "live")
         mock_llm = MagicMock()
@@ -267,7 +267,7 @@ class TestRetryLogic:
             run_search_agent(state, config=_live_config(max_retries=1))
 
     @patch("agents.search.web_search")
-    @patch("agents.search.ChatAnthropic")
+    @patch("agents.search.ChatOpenAI")
     def test_token_usage_accumulated_across_retries(self, mock_llm_cls, mock_web_search):
         mock_web_search.return_value = ([], "live")
         mock_llm = MagicMock()

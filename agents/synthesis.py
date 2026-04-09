@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, ToolMessage
 from pydantic import BaseModel, Field, ValidationError
 
@@ -128,14 +128,14 @@ def run_synthesis_agent(
     print(f"[synthesis_agent] findings={len(findings)}, sources={len(sources)}")
 
     # --- LLM structured synthesis ---
-    if not cfg.anthropic_api_key and state.mode != RunMode.DEV:
+    if not cfg.openai_api_key and state.mode != RunMode.DEV:
         raise RuntimeError(
-            f"{state.mode.value} mode requires ANTHROPIC_API_KEY for synthesis"
+            f"{state.mode.value} mode requires OPENAI_API_KEY for synthesis"
         )
 
-    if not cfg.anthropic_api_key:
+    if not cfg.openai_api_key:
         # Dev mode stub
-        print("[synthesis_agent] no ANTHROPIC_API_KEY, using stub synthesis (dev mode)")
+        print("[synthesis_agent] no OPENAI_API_KEY, using stub synthesis (dev mode)")
         at_loop_cap = state.loop_count >= state.max_loops
         has_gaps = len(findings) < 5
         needs_more = not at_loop_cap and has_gaps
@@ -228,14 +228,14 @@ def _llm_synthesize(
     cfg: AppConfig,
 ) -> tuple[SynthesisOutput, int, int]:
     """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
-    llm = ChatAnthropic(
+    llm = ChatOpenAI(
         model=cfg.model_name,
-        api_key=cfg.anthropic_api_key,
+        api_key=cfg.openai_api_key,
         temperature=0,
     )
     llm_with_tool = llm.bind_tools(
         [SynthesisOutput],
-        tool_choice={"type": "tool", "name": "SynthesisOutput"},
+        tool_choice="SynthesisOutput",
     )
 
     prompt = _build_synthesis_prompt(

@@ -38,7 +38,7 @@ def _dev_config(**overrides) -> AppConfig:
 def _live_config(**overrides) -> AppConfig:
     return AppConfig(
         mode=RunMode.LIVE,
-        anthropic_api_key="test-key",
+        openai_api_key="test-key",
         tavily_api_key="test-key",
         **overrides,
     )
@@ -213,16 +213,16 @@ class TestDevMode:
 # ---------------------------------------------------------------------------
 
 class TestEvalMode:
-    def test_eval_fails_without_anthropic_key(self):
+    def test_eval_fails_without_openai_key(self):
         state = _state_with_findings(mode=RunMode.EVAL)
-        cfg = AppConfig(mode=RunMode.EVAL, anthropic_api_key="")
-        with pytest.raises(RuntimeError, match="requires ANTHROPIC_API_KEY"):
+        cfg = AppConfig(mode=RunMode.EVAL, openai_api_key="")
+        with pytest.raises(RuntimeError, match="requires OPENAI_API_KEY"):
             run_synthesis_agent(state, config=cfg)
 
-    def test_live_fails_without_anthropic_key(self):
+    def test_live_fails_without_openai_key(self):
         state = _state_with_findings(mode=RunMode.LIVE)
-        cfg = AppConfig(mode=RunMode.LIVE, anthropic_api_key="")
-        with pytest.raises(RuntimeError, match="requires ANTHROPIC_API_KEY"):
+        cfg = AppConfig(mode=RunMode.LIVE, openai_api_key="")
+        with pytest.raises(RuntimeError, match="requires OPENAI_API_KEY"):
             run_synthesis_agent(state, config=cfg)
 
 
@@ -292,7 +292,7 @@ class TestRouting:
 # ---------------------------------------------------------------------------
 
 class TestRetryLogic:
-    @patch("agents.synthesis.ChatAnthropic")
+    @patch("agents.synthesis.ChatOpenAI")
     def test_succeeds_on_first_attempt(self, mock_llm_cls):
         mock_llm = MagicMock()
         mock_llm_cls.return_value = mock_llm
@@ -310,7 +310,7 @@ class TestRetryLogic:
         assert result["synthesis_draft"] is not None
         assert bound.invoke.call_count == 1
 
-    @patch("agents.synthesis.ChatAnthropic")
+    @patch("agents.synthesis.ChatOpenAI")
     def test_retries_on_prose_then_succeeds(self, mock_llm_cls):
         from langchain_core.messages import ToolMessage as TM
 
@@ -335,7 +335,7 @@ class TestRetryLogic:
         retry_messages = bound.invoke.call_args_list[1][0][0]
         assert not any(isinstance(m, TM) for m in retry_messages)
 
-    @patch("agents.synthesis.ChatAnthropic")
+    @patch("agents.synthesis.ChatOpenAI")
     def test_retry_exhaustion_raises(self, mock_llm_cls):
         mock_llm = MagicMock()
         mock_llm_cls.return_value = mock_llm
@@ -349,7 +349,7 @@ class TestRetryLogic:
         with pytest.raises(RuntimeError, match="failed after"):
             run_synthesis_agent(state, config=_live_config(max_retries=1))
 
-    @patch("agents.synthesis.ChatAnthropic")
+    @patch("agents.synthesis.ChatOpenAI")
     def test_token_usage_accumulated_across_retries(self, mock_llm_cls):
         mock_llm = MagicMock()
         mock_llm_cls.return_value = mock_llm
@@ -372,7 +372,7 @@ class TestRetryLogic:
         # 150 from first attempt + 300 from second = 450
         assert result["token_usage"].synthesis_agent == 450
 
-    @patch("agents.synthesis.ChatAnthropic")
+    @patch("agents.synthesis.ChatOpenAI")
     def test_llm_loop_cap_override(self, mock_llm_cls):
         """Even if LLM says needs_more_search=True, loop cap forces it False."""
         mock_llm = MagicMock()

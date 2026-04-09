@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, ToolMessage
 from pydantic import BaseModel, Field, ValidationError
 
@@ -117,14 +117,14 @@ def run_search_agent(
     print(f"[search_agent] fetched {len(sources)} sources ({source_type})")
 
     # --- Step 2: LLM structured extraction ---
-    if not cfg.anthropic_api_key and state.mode != RunMode.DEV:
+    if not cfg.openai_api_key and state.mode != RunMode.DEV:
         raise RuntimeError(
-            f"{state.mode.value} mode requires ANTHROPIC_API_KEY for LLM extraction"
+            f"{state.mode.value} mode requires OPENAI_API_KEY for LLM extraction"
         )
 
-    if not cfg.anthropic_api_key:
+    if not cfg.openai_api_key:
         # No LLM key — return stub extraction (dev mode only)
-        print("[search_agent] no ANTHROPIC_API_KEY, using stub extraction (dev mode)")
+        print("[search_agent] no OPENAI_API_KEY, using stub extraction (dev mode)")
         search_output = SearchOutput(
             findings=[
                 Finding(
@@ -179,14 +179,14 @@ def _llm_extract(
     cfg: AppConfig,
 ) -> tuple[SearchOutput, int, int]:
     """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
-    llm = ChatAnthropic(
+    llm = ChatOpenAI(
         model=cfg.model_name,
-        api_key=cfg.anthropic_api_key,
+        api_key=cfg.openai_api_key,
         temperature=0,
     )
     llm_with_tool = llm.bind_tools(
         [SearchOutput],
-        tool_choice={"type": "tool", "name": "SearchOutput"},
+        tool_choice="SearchOutput",
     )
 
     prompt = _build_search_prompt(topic, queries, sources)
