@@ -1,0 +1,26 @@
+:root {
+  /* Paper & ink — warm cream palette */
+  --paper: #F3EFE6;
+  --paper-2: #EAE4D5;
+  --card: #FBF8F1;
+  --ink: #18170F;
+  --ink-2: #3A3727;
+  --ink-3: #6A6550;
+  --ink-4: #938C74;
+  --hair: #1817101A;
+  --hair-2: #18171030;
+
+  /* Semantic — vermillion reserved for the interrupt moment */
+  --red: #B43A2A;
+  --red-soft: #F1E2DD;
+  --green: #3E6B4A;
+  --amber: #B88326;
+  --blue: #3A5E86;
+
+  /* Terminal */
+  --term-bg: #141310;
+  --term-fg: #D9CFB8;
+  --term-mute: #6E6858;
+
+  --pad: 16px;
+}
