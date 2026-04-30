@@ -268,16 +268,16 @@ class TestDevMode:
 # ---------------------------------------------------------------------------
 
 class TestEvalMode:
-    def test_eval_fails_without_anthropic_key(self):
+    def test_eval_fails_without_llm_key(self):
         state = _state_for_report(mode=RunMode.EVAL)
         cfg = AppConfig(mode=RunMode.EVAL, anthropic_api_key="")
-        with pytest.raises(RuntimeError, match="requires ANTHROPIC_API_KEY"):
+        with pytest.raises(RuntimeError, match="requires a valid API key"):
             run_report_agent(state, config=cfg)
 
-    def test_live_fails_without_anthropic_key(self):
+    def test_live_fails_without_llm_key(self):
         state = _state_for_report(mode=RunMode.LIVE)
         cfg = AppConfig(mode=RunMode.LIVE, anthropic_api_key="")
-        with pytest.raises(RuntimeError, match="requires ANTHROPIC_API_KEY"):
+        with pytest.raises(RuntimeError, match="requires a valid API key"):
             run_report_agent(state, config=cfg)
 
 
@@ -286,10 +286,10 @@ class TestEvalMode:
 # ---------------------------------------------------------------------------
 
 class TestRetryLogic:
-    @patch("agents.report.ChatAnthropic")
-    def test_succeeds_on_first_attempt(self, mock_llm_cls):
+    @patch("agents.report.get_chat_model")
+    def test_succeeds_on_first_attempt(self, mock_get_chat_model):
         mock_llm = MagicMock()
-        mock_llm_cls.return_value = mock_llm
+        mock_get_chat_model.return_value = mock_llm
         bound = MagicMock()
         mock_llm.bind_tools.return_value = bound
 
@@ -304,10 +304,10 @@ class TestRetryLogic:
         assert result["final_report"] is not None
         assert bound.invoke.call_count == 1
 
-    @patch("agents.report.ChatAnthropic")
-    def test_retry_exhaustion_raises(self, mock_llm_cls):
+    @patch("agents.report.get_chat_model")
+    def test_retry_exhaustion_raises(self, mock_get_chat_model):
         mock_llm = MagicMock()
-        mock_llm_cls.return_value = mock_llm
+        mock_get_chat_model.return_value = mock_llm
         bound = MagicMock()
         mock_llm.bind_tools.return_value = bound
 
