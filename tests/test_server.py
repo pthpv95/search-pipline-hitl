@@ -19,6 +19,11 @@ def client(tmp_path, monkeypatch):
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)
     monkeypatch.delenv("OPENCODE_GO_API_KEY", raising=False)
     monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.setenv("TRIAL_LIMIT", "999")
+    monkeypatch.delenv("API_KEYS", raising=False)
+    # Clean up trial tracking file created during tests
+    trial_file = tmp_path / ".trials.json"
+    monkeypatch.setenv("TRIAL_DATA_FILE", str(trial_file))
     server.REGISTRY._sessions.clear()
     with TestClient(server.app) as test_client:
         yield test_client
@@ -172,6 +177,89 @@ def test_sse_endpoint_replays_snapshot_and_journal(client: TestClient):
     joined = "".join(chunks)
     assert "event: run.phase_changed" in joined
     assert "event: run.created" in joined or "event: review.required" in joined
+
+
+# ---------------------------------------------------------------------------
+# Trial gating
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def trial_client(tmp_path, monkeypatch):
+    """TestClient with TRIAL_LIMIT=2 and fresh trial data."""
+    monkeypatch.setattr(api_runtime, "RUNS_DIR", tmp_path)
+    monkeypatch.setattr(server, "RUNS_DIR", tmp_path)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    monkeypatch.delenv("OPENCODE_GO_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("API_KEYS", raising=False)
+    monkeypatch.setenv("TRIAL_LIMIT", "2")
+    trial_file = tmp_path / ".trials.json"
+    monkeypatch.setenv("TRIAL_DATA_FILE", str(trial_file))
+    server.REGISTRY._sessions.clear()
+    with TestClient(server.app) as test_client:
+        yield test_client
+    server.REGISTRY._sessions.clear()
+
+
+def _create(tc: TestClient, max_loops: int = 1):
+    return tc.post(
+        "/api/runs",
+        json={"topic": "trial test", "mode": "dev", "report_format": "deep_dive", "max_loops": max_loops},
+    )
+
+
+def test_health_reports_trial_remaining(trial_client: TestClient):
+    resp = trial_client.get("/api/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["authenticated"] is False
+    assert data["trial_remaining"] == 2
+
+
+def test_can_create_run_within_trial_limit(trial_client: TestClient):
+    r1 = _create(trial_client)
+    assert r1.status_code == 200
+    assert r1.json()["trial_remaining"] == 1
+
+    r2 = _create(trial_client)
+    assert r2.status_code == 200
+    assert r2.json()["trial_remaining"] == 0
+
+
+def test_trial_exhausted_returns_403(trial_client: TestClient):
+    _create(trial_client)  # trial 1
+    _create(trial_client)  # trial 2
+
+    r3 = _create(trial_client)  # should be blocked
+    assert r3.status_code == 403
+    detail = r3.json()
+    assert detail["code"] == "trial_exhausted"
+    assert detail["trial_remaining"] == 0
+
+
+def test_valid_api_key_bypasses_trials(trial_client: TestClient, monkeypatch):
+    monkeypatch.setenv("API_KEYS", "secret-key")
+    # Exhaust trials first
+    _create(trial_client)
+    _create(trial_client)
+
+    # With valid API key — should pass
+    resp = trial_client.post(
+        "/api/runs",
+        json={"topic": "with key", "mode": "dev", "report_format": "deep_dive", "max_loops": 1},
+        headers={"X-API-Key": "secret-key"},
+    )
+    assert resp.status_code == 200
+    assert resp.json().get("trial_remaining") is None  # no trial consumed
+
+    # Invalid API key with no trials left — blocked
+    resp2 = trial_client.post(
+        "/api/runs",
+        json={"topic": "bad key", "mode": "dev", "report_format": "deep_dive", "max_loops": 1},
+        headers={"X-API-Key": "wrong-key"},
+    )
+    assert resp2.status_code == 403
 
 
 async def _take_async_chunks(iterator, count: int) -> list[str]:

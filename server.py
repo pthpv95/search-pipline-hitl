@@ -8,7 +8,7 @@ import json
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
@@ -22,6 +22,7 @@ from api_runtime import (
     resume_after_review,
     run_session_in_background,
 )
+from auth.trials import consume_trial, trials_remaining, validate_api_key
 from config import AppConfig
 
 app = FastAPI(title="Research Console API", version="0.1.0")
@@ -34,6 +35,31 @@ app.add_middleware(
 )
 
 REGISTRY = SessionRegistry()
+
+
+def _check_trial_or_auth(request: Request, x_api_key: str | None = Header(default=None)) -> str | None:
+    """FastAPI dependency.  Raises 403 if no valid API key and no trials left.
+
+    Returns the client IP when using a trial (so the caller knows to consume it),
+    or None when authenticated via API key.
+    """
+    if validate_api_key(x_api_key):
+        return None  # authenticated
+
+    ip = request.client.host if request.client else "unknown"
+    remaining = trials_remaining(ip)
+    if remaining <= 0:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "detail": "Trial limit reached — no free runs remaining. Set API_KEYS in your env and pass X-API-Key header to continue.",
+                "code": "trial_exhausted",
+                "retryable": False,
+                "trial_remaining": 0,
+                "setup_hint": "export API_KEYS=your-key-here",
+            },
+        )
+    return ip  # on trial — caller must consume
 
 
 def api_error(status_code: int, detail: str, code: str, retryable: bool = False) -> HTTPException:
@@ -54,12 +80,16 @@ async def http_exception_handler(_, exc: HTTPException):
 
 
 @app.get("/api/health")
-def health() -> dict:
+def health(request: Request, x_api_key: str | None = Header(default=None)) -> dict:
+    ip = request.client.host if request.client else "unknown"
+    authenticated = validate_api_key(x_api_key)
     return {
         "ok": True,
         "active_run_count": REGISTRY.active_count(),
         "persistence": "runs_dir_only",
         "durable_resume": False,
+        "authenticated": authenticated,
+        "trial_remaining": trials_remaining(ip) if not authenticated else None,
     }
 
 
@@ -88,7 +118,9 @@ def list_runs(include: str = Query(default="active,completed"), limit: int = Que
 
 
 @app.post("/api/runs")
-def create_run(payload: CreateRunRequest) -> dict:
+def create_run(payload: CreateRunRequest, request: Request, x_api_key: str | None = Header(default=None)) -> dict:
+    ip = _check_trial_or_auth(request, x_api_key)
+
     cfg = AppConfig.from_env(
         mode=payload.mode,
         report_format=payload.report_format,
@@ -97,10 +129,16 @@ def create_run(payload: CreateRunRequest) -> dict:
     session = create_session(payload.model_dump(mode="python"), cfg)
     REGISTRY.add(session)
     run_session_in_background(session)
+
+    # Consume trial if not authenticated
+    if ip is not None:
+        consume_trial(ip)
+
     return {
         "run_id": session.run_id,
         "stream_url": f"/api/runs/{session.run_id}/events",
         "detail_url": f"/api/runs/{session.run_id}",
+        "trial_remaining": trials_remaining(ip) if ip is not None else None,
     }
 
 

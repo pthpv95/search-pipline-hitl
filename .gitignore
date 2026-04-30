@@ -13,4 +13,5 @@ web/node_modules
 web/dist
 web/tsconfig.tsbuildinfo
 runs/
+.trials.json
 .DS_Store
