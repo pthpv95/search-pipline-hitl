@@ -9,3 +9,8 @@ dist/
 build/
 .pytest_cache/
 .pyc
+web/node_modules
+web/dist
+web/tsconfig.tsbuildinfo
+runs/
+.DS_Store
