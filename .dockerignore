@@ -1,0 +1,14 @@
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.git
+.env
+.DS_Store
+runs
+.trials.json
+web/node_modules
+web/dist
+web/tsconfig.tsbuildinfo
+*.md
+!README.md

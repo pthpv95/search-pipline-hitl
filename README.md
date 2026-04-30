@@ -19,6 +19,15 @@ The pipeline supports three review outcomes after the human interrupt:
 
 ## Setup
 
+### Docker (recommended)
+
+```bash
+cp .env.example .env   # edit with your API keys
+docker compose up      # backend :8000, frontend :5173
+```
+
+### Local
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -73,6 +82,8 @@ cd web && npm run dev              # Frontend :5173, proxies /api → :8000
 | `graph.py`             | LangGraph `StateGraph` definition, nodes, and routing |
 | `config.py`            | Environment config and API key loading               |
 | `llm_factory.py`       | Provider abstraction — returns ChatAnthropic or ChatOpenAI |
+| `config.py`            | Environment config, model pricing, and provider fields   |
+| `auth/trials.py`       | IP-based trial gating (2 free runs, then API key)       |
 | `agents/search.py`     | Search agent — LLM + Tavily web search               |
 | `agents/synthesis.py`  | Synthesis agent — combines findings, detects gaps    |
 | `agents/human_review.py`| Human review node with `interrupt()` for HITL       |
@@ -85,6 +96,10 @@ cd web && npm run dev              # Frontend :5173, proxies /api → :8000
 | `api_models.py`        | Pydantic request/response models for the API         |
 | `api_runtime.py`       | In-memory session registry + background graph runner |
 | `web/`                 | React + Vite browser console (run list, pipeline graph, review panel) |
+| `Dockerfile`           | Python backend container                                |
+| `Dockerfile.web`       | Nginx + React frontend container                        |
+| `docker-compose.yml`   | One-command orchestration (backend + frontend)          |
+| `pyproject.toml`       | Project metadata, deps, ruff/mypy/pytest config         |
 | `evals/eval.py`        | Score saved runs on citation, source, coverage, etc. |
 | `evals/run_eval_topics.py` | Batch-run the 5 suggested eval topics            |
 | `tests/`               | Test suite (state, graph, agents, human review, evals, server)|
