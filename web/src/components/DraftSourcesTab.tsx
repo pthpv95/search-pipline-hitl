@@ -1,11 +1,55 @@
-import type { CSSProperties } from 'react';
+import { type CSSProperties, type ReactNode, useRef, useState } from 'react';
 import { Label, Pill } from './primitives';
 import type { RunDetailDto } from '../api/types';
+
+const citationRx = /\[(\d+)\]/g;
+
+function renderDraft(text: string, onCite: (index: number) => void): ReactNode[] {
+  const elements: ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = citationRx.exec(text)) !== null) {
+    if (match.index > last) {
+      elements.push(text.slice(last, match.index));
+    }
+    const num = parseInt(match[1], 10);
+    elements.push(
+      <span
+        key={match.index}
+        onClick={() => onCite(num - 1)}
+        className="mono"
+        style={citationStyle}
+        title={`Jump to source ${num}`}
+      >
+        [{num}]
+      </span>,
+    );
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) {
+    elements.push(text.slice(last));
+  }
+
+  return elements;
+}
 
 export function DraftSourcesTab({ detail }: { detail: RunDetailDto | null }) {
   if (!detail) return null;
 
   const draft = detail.draft;
+  const [activeSourceIndex, setActiveSourceIndex] = useState<number | null>(null);
+  const sourceRefs = useRef<(HTMLElement | null)[]>([]);
+
+  function handleCitationClick(index: number) {
+    if (index < 0 || index >= draft.sources.length) return;
+    setActiveSourceIndex(index);
+    const el = sourceRefs.current[index];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    setTimeout(() => setActiveSourceIndex(null), 2000);
+  }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 22, alignItems: 'flex-start' }}>
@@ -32,7 +76,7 @@ export function DraftSourcesTab({ detail }: { detail: RunDetailDto | null }) {
             minHeight: 260,
           }}
         >
-          {draft.text || 'No draft available yet.'}
+          {draft.text ? renderDraft(draft.text, handleCitationClick) : 'No draft available yet.'}
         </div>
       </section>
 
@@ -51,23 +95,26 @@ export function DraftSourcesTab({ detail }: { detail: RunDetailDto | null }) {
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {draft.sources.map((source) => (
+          {draft.sources.map((source, index) => (
             <a
               key={source.id}
               href={source.url}
               target="_blank"
               rel="noreferrer"
+              ref={(el) => { sourceRefs.current[index] = el; }}
+              id={`src-${index}`}
               style={{
                 display: 'block',
                 textDecoration: 'none',
                 color: 'inherit',
-                border: '1px solid var(--hair)',
+                border: activeSourceIndex === index ? '1px solid var(--blue)' : '1px solid var(--hair)',
                 padding: '12px 14px',
-                background: '#fff',
+                background: activeSourceIndex === index ? 'var(--card)' : '#fff',
+                transition: 'border 0.15s, background 0.15s',
               }}
             >
               <div className="mono" style={{ fontSize: 10.5, color: 'var(--ink-4)', marginBottom: 6 }}>
-                {source.domain}
+                [{index + 1}] {source.domain}
               </div>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}>{source.title}</div>
               <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 6, lineHeight: 1.5 }}>{source.snippet}</div>
@@ -87,4 +134,10 @@ const panelStyle: CSSProperties = {
   border: '1px solid var(--hair)',
   borderRadius: 2,
   padding: '20px 22px',
+};
+
+const citationStyle: CSSProperties = {
+  cursor: 'pointer',
+  color: 'var(--blue)',
+  fontWeight: 600,
 };
