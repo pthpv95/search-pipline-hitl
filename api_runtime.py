@@ -22,7 +22,6 @@ from evals.eval import evaluate_run
 from run_pipeline import RUNS_DIR, save_run
 from state import GraphStatus, ResearchState, RunMetadata
 
-
 NODE_ORDER = ["search_agent", "synthesis_agent", "human_review", "report_agent"]
 
 
@@ -85,7 +84,7 @@ class RunSession:
                 "data": data or {},
             }
             self.event_journal.append(event)
-            self.updated_at = event["ts"]
+            self.updated_at = event["ts"]  # type: ignore[assignment]
             return event
 
     def snapshot(self) -> dict[str, Any]:

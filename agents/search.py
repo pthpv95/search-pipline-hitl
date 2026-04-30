@@ -12,9 +12,9 @@ import time
 from typing import Any
 
 from langchain_core.messages import HumanMessage, ToolMessage
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, ValidationError, model_validator
 
-from config import AppConfig, DEFAULT_CONFIG
+from config import DEFAULT_CONFIG, AppConfig
 from llm_factory import extract_token_usage, get_chat_model, has_llm_key, tool_choice_for
 from state import (
     Finding,
@@ -193,7 +193,7 @@ def _llm_extract(
     )
 
     prompt = _build_search_prompt(topic, queries, sources)
-    messages = [HumanMessage(content=f"{SEARCH_SYSTEM}\n\n{prompt}")]
+    messages: list[Any] = [HumanMessage(content=f"{SEARCH_SYSTEM}\n\n{prompt}")]
     total_in = 0
     total_out = 0
 

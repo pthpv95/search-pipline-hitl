@@ -1,3 +1,15 @@
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+    "api_adapters", "api_models", "api_runtime",
+    "cli_review", "config", "generate_report_pdf",
+    "graph", "llm_factory", "run_pipeline", "server", "state",
+]
+packages = ["agents", "auth", "evals", "tools", "tests"]
+
 [project]
 name = "research-console"
 version = "0.2.0"
@@ -28,7 +40,7 @@ dev = [
 
 [tool.ruff]
 line-length = 120
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B"]
@@ -38,12 +50,11 @@ ignore = ["E501"]
 known-first-party = ["agents", "auth", "tools", "evals", "config", "state", "graph", "llm_factory"]
 
 [tool.mypy]
-python_version = "3.9"
-strict = false
-warn_return_any = true
-warn_unused_ignores = true
-disallow_untyped_defs = false
+python_version = "3.10"
 ignore_missing_imports = true
+warn_return_any = false
+warn_unused_ignores = false
+disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

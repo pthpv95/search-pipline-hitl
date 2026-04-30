@@ -3,9 +3,8 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
-
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -29,7 +28,7 @@ print(f"Testing tool_choice via {BASE_URL} with model {MODEL}")
 # --- Test with forced tool_choice ---
 llm = ChatOpenAI(
     model=MODEL,
-    api_key=API_KEY,
+    api_key=API_KEY,  # type: ignore[arg-type]
     base_url=BASE_URL,
     temperature=0,
 )
@@ -42,10 +41,10 @@ response = llm_with_tool.invoke("Say hello in French")
 tc = getattr(response, "tool_calls", None)
 if tc and len(tc) > 0:
     call = tc[0]
-    print(f"PASS: tool_choice works")
+    print("PASS: tool_choice works")
     print(f"  tool called: {call['name']}")
     print(f"  args: {call['args']}")
 else:
-    print(f"FAIL: No tool call returned")
+    print("FAIL: No tool call returned")
     print(f"  response content: {str(response.content)[:200]}")
     sys.exit(1)

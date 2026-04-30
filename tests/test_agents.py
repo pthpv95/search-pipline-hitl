@@ -10,6 +10,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
 
 from agents.search import (
     SearchOutput,
@@ -18,13 +19,10 @@ from agents.search import (
 )
 from config import AppConfig
 from state import (
-    Finding,
     GraphStatus,
     ResearchState,
     RunMode,
-    Source,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -90,7 +88,7 @@ class TestSearchOutputSchema:
     def test_missing_required_field_fails(self):
         args = _valid_search_output_args()
         del args["reasoning"]
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             SearchOutput.model_validate(args)
 
     def test_empty_findings_is_valid(self):
@@ -128,7 +126,7 @@ class TestParseToolCall:
         response = _mock_ai_response(
             tool_calls=[{"name": "SearchOutput", "id": "1", "args": {"bad": "data"}}]
         )
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             _parse_tool_call(response)
 
 
@@ -224,7 +222,7 @@ class TestRetryLogic:
     @patch("agents.search.web_search")
     @patch("agents.search.get_chat_model")
     def test_retries_on_prose_then_succeeds(self, mock_get_chat_model, mock_web_search):
-        from langchain_core.messages import HumanMessage as HM, ToolMessage as TM
+        from langchain_core.messages import ToolMessage
 
         mock_web_search.return_value = ([], "live")
         mock_llm = MagicMock()
@@ -245,9 +243,9 @@ class TestRetryLogic:
         assert result["status"] == GraphStatus.SYNTHESIZING
         assert bound.invoke.call_count == 2
 
-        # Verify no ToolMessage was sent for the prose retry (no tool_call_id to reference)
+        # Verify no ToolMessage was sent for the prose retry
         retry_messages = bound.invoke.call_args_list[1][0][0]
-        assert not any(isinstance(m, TM) for m in retry_messages)
+        assert not any(isinstance(m, ToolMessage) for m in retry_messages)
 
     @patch("agents.search.web_search")
     @patch("agents.search.get_chat_model")

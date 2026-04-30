@@ -7,10 +7,6 @@ edited draft path, additional queries path, rejection path, persistence.
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-import pytest
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 
@@ -18,10 +14,8 @@ from agents.human_review import build_review_payload, parse_review_input
 from graph import compile_graph
 from state import (
     Finding,
-    FinalReport,
     GraphStatus,
     HumanReview,
-    ReportFormat,
     ResearchState,
     RunMetadata,
     RunMode,
@@ -29,7 +23,6 @@ from state import (
     Source,
     SynthesisDraft,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -349,7 +342,7 @@ class TestCheckpointPersistence:
 
     def test_checkpoint_accessible_after_completion(self):
         graph, config, state, _ = _run_until_interrupt()
-        result = graph.invoke(
+        _result = graph.invoke(
             Command(resume={"action": "approve"}),
             config=config,
         )

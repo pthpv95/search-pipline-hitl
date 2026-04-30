@@ -11,8 +11,7 @@ from pydantic import BaseModel
 
 load_dotenv()
 
-from state import ReportFormat, RunMode
-
+from state import ReportFormat, RunMode  # noqa: E402
 
 # Approximate model pricing in USD per million tokens.
 # Used by evals/eval.py for cost estimation. Update when pricing changes.
@@ -68,7 +67,7 @@ class AppConfig(BaseModel):
         return self.model_name
 
     @classmethod
-    def from_env(cls, **overrides) -> "AppConfig":
+    def from_env(cls, **overrides) -> AppConfig:
         return cls(
             llm_provider=os.getenv("LLM_PROVIDER", "anthropic"),
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),

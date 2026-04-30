@@ -6,14 +6,13 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from api_adapters import artifact_to_detail, artifact_to_summary, session_to_detail, session_to_summary
-from api_models import CreateRunRequest, ErrorResponse, ReviewDecisionRequest
+from api_models import CreateRunRequest, ReviewDecisionRequest
 from api_runtime import (
     RUNS_DIR,
     SessionRegistry,

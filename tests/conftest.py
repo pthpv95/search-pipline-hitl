@@ -3,12 +3,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import config
+import config  # noqa: E402
 
 # Tests should be deterministic and must not drift into live Claude/Tavily calls
 # just because a developer has API keys in their local .env.

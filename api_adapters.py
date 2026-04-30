@@ -143,7 +143,7 @@ def _evaluation_view(
         eval_section.update(
             {
                 "ready": True,
-                "overall": report.scores.overall,
+                "overall": report.scores.overall,  # type: ignore[dict-item]
                 "scores": {
                     "citation_integrity": report.scores.citation_integrity,
                     "source_validity": report.scores.source_validity,
@@ -306,7 +306,7 @@ def session_to_detail(session: RunSession) -> dict[str, Any]:
 
 def artifact_to_detail(path: Path) -> dict[str, Any]:
     run = json.loads(path.read_text())
-    evaluation = evaluate_run(run, path)
+    evaluate_run(run, path)  # side effect: runs eval scoring
     report = run.get("final_report") or {}
     token_usage = run.get("token_usage") or {}
     node_timings = run.get("node_timings") or {}

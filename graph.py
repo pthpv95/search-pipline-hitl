@@ -13,7 +13,6 @@ from agents.search import run_search_agent
 from agents.synthesis import run_synthesis_agent
 from config import DEFAULT_CONFIG
 from state import (
-    GraphStatus,
     ResearchState,
     RunMetadata,
 )
@@ -54,7 +53,7 @@ def route_after_review(state: ResearchState) -> str:
         return END
 
     if review.additional_queries and state.loop_count < state.max_loops:
-        print(f"\n[router] reviewer requested additional queries; returning to search_agent")
+        print("\n[router] reviewer requested additional queries; returning to search_agent")
         return "search_agent"
 
     print("\n[router] review approved; continuing to report_agent")

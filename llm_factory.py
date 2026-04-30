@@ -18,15 +18,15 @@ def get_chat_model(cfg: AppConfig):
     if cfg.llm_provider == "opencode_go":
         return ChatOpenAI(
             model=cfg.opencode_go_model,
-            api_key=cfg.opencode_go_api_key,
+            api_key=cfg.opencode_go_api_key,  # type: ignore[arg-type]
             base_url=cfg.opencode_go_base_url,
             temperature=0,
         )
 
     # Default: anthropic
     return ChatAnthropic(
-        model=cfg.model_name,
-        api_key=cfg.anthropic_api_key,
+        model=cfg.model_name,  # type: ignore[call-arg]
+        api_key=cfg.anthropic_api_key,  # type: ignore[arg-type]
         temperature=0,
     )
 

@@ -11,9 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,7 +21,7 @@ from langgraph.types import Command
 
 from config import AppConfig
 from graph import compile_graph
-from state import GraphStatus, ReportFormat, ResearchState, RunMetadata, RunMode
+from state import ReportFormat, ResearchState, RunMetadata, RunMode
 
 RUNS_DIR = Path(__file__).parent / "runs"
 

@@ -8,10 +8,10 @@ dev/eval mode, retry logic, saved JSON structure, auto-approve path.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
 
 from agents.report import (
     ReportOutput,
@@ -23,7 +23,6 @@ from config import AppConfig
 from run_pipeline import run_pipeline, save_run
 from state import (
     Finding,
-    FinalReport,
     GraphStatus,
     HumanReview,
     ReportFormat,
@@ -33,7 +32,6 @@ from state import (
     Source,
     SynthesisDraft,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -136,7 +134,7 @@ class TestReportOutputSchema:
     def test_missing_required_field_fails(self):
         args = _valid_report_output_args()
         del args["body"]
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             ReportOutput.model_validate(args)
 
     def test_empty_citations_is_valid(self):
@@ -450,7 +448,7 @@ class TestAutoApprovePipeline:
         original = rp.RUNS_DIR
         rp.RUNS_DIR = tmp_path
         try:
-            result = run_pipeline(
+            _result = run_pipeline(
                 topic="save test",
                 mode=RunMode.DEV,
                 max_loops=1,

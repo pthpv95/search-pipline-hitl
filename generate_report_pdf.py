@@ -5,11 +5,9 @@ from __future__ import annotations
 import json
 import re
 import sys
-import textwrap
 from pathlib import Path
 
 from fpdf import FPDF
-
 
 _FONT = "Dejavu"
 
@@ -98,7 +96,6 @@ def build_pdf(run_path: Path, output_path: Path | None = None) -> Path:
     pdf.set_fill_color(240, 240, 248)
     pdf.set_font(_FONT, "B", 9)
     pdf.set_text_color(60, 60, 60)
-    y_box = pdf.get_y()
     pdf.cell(0, 7, "  Run Statistics", fill=True)
     pdf.ln(8)
     pdf.set_font(_FONT, "", 9)
@@ -220,8 +217,6 @@ def build_pdf(run_path: Path, output_path: Path | None = None) -> Path:
 def _render_rich_line(pdf: FPDF, text: str):
     """Render a line with **bold** and [N] citation markers."""
     parts = re.split(r"(\*\*.*?\*\*|\[\d+\])", text)
-    x_start = pdf.get_x()
-    line_w = pdf.w - pdf.l_margin - pdf.r_margin
 
     for part in parts:
         if not part:

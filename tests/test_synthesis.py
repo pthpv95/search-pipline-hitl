@@ -10,6 +10,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
 
 from agents.synthesis import (
     SynthesisOutput,
@@ -25,7 +26,6 @@ from state import (
     SearchResult,
     Source,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -121,13 +121,13 @@ class TestSynthesisOutputSchema:
     def test_missing_required_field_fails(self):
         args = _valid_synthesis_output_args()
         del args["reasoning"]
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             SynthesisOutput.model_validate(args)
 
     def test_confidence_bounds_enforced(self):
         args = _valid_synthesis_output_args()
         args["confidence"] = 1.5
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             SynthesisOutput.model_validate(args)
 
     def test_no_search_needed_is_valid(self):
@@ -167,7 +167,7 @@ class TestParseToolCall:
         response = _mock_ai_response(
             tool_calls=[{"name": "SynthesisOutput", "id": "1", "args": {"bad": "data"}}]
         )
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             _parse_tool_call(response)
 
 
@@ -312,7 +312,7 @@ class TestRetryLogic:
 
     @patch("agents.synthesis.get_chat_model")
     def test_retries_on_prose_then_succeeds(self, mock_get_chat_model):
-        from langchain_core.messages import ToolMessage as TM
+        from langchain_core.messages import ToolMessage
 
         mock_llm = MagicMock()
         mock_get_chat_model.return_value = mock_llm
@@ -333,7 +333,7 @@ class TestRetryLogic:
 
         # No ToolMessage for prose retry
         retry_messages = bound.invoke.call_args_list[1][0][0]
-        assert not any(isinstance(m, TM) for m in retry_messages)
+        assert not any(isinstance(m, ToolMessage) for m in retry_messages)
 
     @patch("agents.synthesis.get_chat_model")
     def test_retry_exhaustion_raises(self, mock_get_chat_model):

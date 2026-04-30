@@ -7,7 +7,6 @@ services:
       - .env
     volumes:
       - ./runs:/app/runs
-      - ./.trials.json:/app/.trials.json
     restart: unless-stopped
 
   frontend:

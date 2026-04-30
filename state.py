@@ -139,7 +139,7 @@ class TokenUsage(BaseModel):
             + self.report_agent_output
         )
 
-    def add(self, **kwargs: int) -> "TokenUsage":
+    def add(self, **kwargs: int) -> TokenUsage:
         # Accept both new (`search_agent_input=...`) and legacy (`search_agent=...`)
         # forms. Legacy form is treated as input tokens so the test
         # `result["token_usage"].search_agent == 450` keeps working.
@@ -168,7 +168,7 @@ class NodeTiming(BaseModel):
             + self.human_review
         )
 
-    def add(self, **kwargs: float) -> "NodeTiming":
+    def add(self, **kwargs: float) -> NodeTiming:
         updates = {k: getattr(self, k) + v for k, v in kwargs.items()}
         return self.model_copy(update=updates)
 
@@ -233,7 +233,7 @@ class ResearchState(BaseModel):
             self.synthesis_draft.remaining_gaps
         )
 
-    def with_error(self, msg: str) -> "ResearchState":
+    def with_error(self, msg: str) -> ResearchState:
         return self.model_copy(
             update={
                 "errors": self.errors + [msg],

@@ -10,8 +10,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
-import sys
 import textwrap
 from datetime import datetime, timezone
 
@@ -21,7 +19,7 @@ from langgraph.types import Command
 from config import AppConfig
 from graph import compile_graph
 from run_pipeline import save_run
-from state import GraphStatus, ReportFormat, ResearchState, RunMetadata, RunMode
+from state import ReportFormat, ResearchState, RunMetadata, RunMode
 
 
 def display_review_payload(payload: dict) -> None:
@@ -61,7 +59,7 @@ def display_review_payload(payload: dict) -> None:
             print(f"  - {gap}")
 
     if payload["limitations"]:
-        print(f"\n--- Limitations ---")
+        print("\n--- Limitations ---")
         for lim in payload["limitations"]:
             print(f"  - {lim}")
 
@@ -212,7 +210,7 @@ def run_interactive(
     print(f"Errors:       {', '.join(result['errors']) if result['errors'] else 'none'}")
 
     if result.get("final_report"):
-        print(f"\n--- Report Preview ---")
+        print("\n--- Report Preview ---")
         print(f"Title: {result['final_report'].title}")
         print(f"Words: {result['final_report'].word_count}")
         body_preview = result["final_report"].body[:500]
