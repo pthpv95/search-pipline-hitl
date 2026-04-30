@@ -154,7 +154,7 @@ def run_pipeline(
         report_format=cfg.report_format,
         max_loops=cfg.max_loops,
         run_metadata=RunMetadata(
-            model_name=cfg.model_name,
+            model_name=cfg.effective_model_name,
             search_provider=cfg.search_provider,
             thread_id=thread_id,
         ),
@@ -184,7 +184,7 @@ def run_pipeline(
     print(format_cost_summary(
         token_usage=result["token_usage"],
         node_timings=result["node_timings"],
-        model_name=cfg.model_name,
+        model_name=cfg.effective_model_name,
     ))
 
     if save:

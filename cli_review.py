@@ -168,7 +168,7 @@ def run_interactive(
         report_format=cfg.report_format,
         max_loops=cfg.max_loops,
         run_metadata=RunMetadata(
-            model_name=cfg.model_name,
+            model_name=cfg.effective_model_name,
             search_provider=cfg.search_provider,
             thread_id=thread_id,
         ),
