@@ -7,14 +7,15 @@ Writes: synthesis_draft, current_queries, status, token_usage, node_timings, err
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
-from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, ToolMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from config import AppConfig, DEFAULT_CONFIG
+from llm_factory import extract_token_usage, get_chat_model, has_llm_key, tool_choice_for
 from state import (
     Finding,
     GraphStatus,
@@ -35,6 +36,19 @@ class SynthesisOutput(BaseModel):
     follow_up_queries: list[str]
     limitations: list[str] = Field(default_factory=list)
     reasoning: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_stringified_lists(cls, data: Any) -> Any:
+        """Some providers return list fields as JSON strings (e.g. '[]' instead of [])."""
+        if isinstance(data, dict):
+            for key, value in list(data.items()):
+                if isinstance(value, str) and value.startswith("[") and value.endswith("]"):
+                    try:
+                        data[key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        pass
+        return data
 
 
 SYNTHESIS_SYSTEM = (
@@ -84,12 +98,6 @@ def _build_synthesis_prompt(
     )
 
 
-def _extract_tokens(response: Any) -> tuple[int, int]:
-    meta = getattr(response, "response_metadata", {}) or {}
-    usage = meta.get("usage", {})
-    return usage.get("input_tokens", 0), usage.get("output_tokens", 0)
-
-
 def _parse_tool_call(response: Any) -> SynthesisOutput:
     """Parse and validate a SynthesisOutput from the LLM response's tool calls."""
     tool_calls = getattr(response, "tool_calls", None)
@@ -128,14 +136,14 @@ def run_synthesis_agent(
     print(f"[synthesis_agent] findings={len(findings)}, sources={len(sources)}")
 
     # --- LLM structured synthesis ---
-    if not cfg.anthropic_api_key and state.mode != RunMode.DEV:
+    if not has_llm_key(cfg) and state.mode != RunMode.DEV:
         raise RuntimeError(
-            f"{state.mode.value} mode requires ANTHROPIC_API_KEY for synthesis"
+            f"{state.mode.value} mode requires a valid API key for synthesis"
         )
 
-    if not cfg.anthropic_api_key:
+    if not has_llm_key(cfg):
         # Dev mode stub
-        print("[synthesis_agent] no ANTHROPIC_API_KEY, using stub synthesis (dev mode)")
+        print("[synthesis_agent] no LLM key configured, using stub synthesis (dev mode)")
         at_loop_cap = state.loop_count >= state.max_loops
         has_gaps = len(findings) < 5
         needs_more = not at_loop_cap and has_gaps
@@ -228,14 +236,10 @@ def _llm_synthesize(
     cfg: AppConfig,
 ) -> tuple[SynthesisOutput, int, int]:
     """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
-    llm = ChatAnthropic(
-        model=cfg.model_name,
-        api_key=cfg.anthropic_api_key,
-        temperature=0,
-    )
+    llm = get_chat_model(cfg)
     llm_with_tool = llm.bind_tools(
         [SynthesisOutput],
-        tool_choice={"type": "tool", "name": "SynthesisOutput"},
+        tool_choice=tool_choice_for("SynthesisOutput", cfg.llm_provider),
     )
 
     prompt = _build_synthesis_prompt(
@@ -247,7 +251,7 @@ def _llm_synthesize(
 
     for attempt in range(1, cfg.max_retries + 2):  # 1 initial + max_retries
         response = llm_with_tool.invoke(messages)
-        in_tokens, out_tokens = _extract_tokens(response)
+        in_tokens, out_tokens = extract_token_usage(response)
         total_in += in_tokens
         total_out += out_tokens
 

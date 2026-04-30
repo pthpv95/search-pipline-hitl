@@ -8,14 +8,15 @@ Writes: final_report, status, token_usage, node_timings, errors
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
-from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, ToolMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from config import AppConfig, DEFAULT_CONFIG
+from llm_factory import extract_token_usage, get_chat_model, has_llm_key, tool_choice_for
 from state import (
     FinalReport,
     GraphStatus,
@@ -36,6 +37,19 @@ class ReportOutput(BaseModel):
         description="URLs of sources actually cited in the body, must be subset of provided sources"
     )
     reasoning: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_stringified_lists(cls, data: Any) -> Any:
+        """Some providers return list fields as JSON strings (e.g. '[]' instead of [])."""
+        if isinstance(data, dict):
+            for key, value in list(data.items()):
+                if isinstance(value, str) and value.startswith("[") and value.endswith("]"):
+                    try:
+                        data[key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        pass
+        return data
 
 
 REPORT_SYSTEM = (
@@ -89,12 +103,6 @@ def _build_report_prompt(
         "IMPORTANT: Only cite sources from the list above. "
         "Include all cited source URLs in the cited_source_urls field."
     )
-
-
-def _extract_tokens(response: Any) -> tuple[int, int]:
-    meta = getattr(response, "response_metadata", {}) or {}
-    usage = meta.get("usage", {})
-    return usage.get("input_tokens", 0), usage.get("output_tokens", 0)
 
 
 def _parse_tool_call(response: Any) -> ReportOutput:
@@ -167,13 +175,13 @@ def run_report_agent(
     print(f"[report_agent] sources={len(sources)}, draft_len={len(approved_draft)}")
 
     # --- LLM structured report ---
-    if not cfg.anthropic_api_key and state.mode != RunMode.DEV:
+    if not has_llm_key(cfg) and state.mode != RunMode.DEV:
         raise RuntimeError(
-            f"{state.mode.value} mode requires ANTHROPIC_API_KEY for report generation"
+            f"{state.mode.value} mode requires a valid API key for report generation"
         )
 
-    if not cfg.anthropic_api_key:
-        print("[report_agent] no ANTHROPIC_API_KEY, using stub report (dev mode)")
+    if not has_llm_key(cfg):
+        print("[report_agent] no LLM key configured, using stub report (dev mode)")
         report_output, tokens_in, tokens_out = _stub_report(
             state.topic, approved_draft, sources, state.report_format, limitations,
         )
@@ -299,14 +307,10 @@ def _llm_report(
     cfg: AppConfig,
 ) -> tuple[ReportOutput, int, int]:
     """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
-    llm = ChatAnthropic(
-        model=cfg.model_name,
-        api_key=cfg.anthropic_api_key,
-        temperature=0,
-    )
+    llm = get_chat_model(cfg)
     llm_with_tool = llm.bind_tools(
         [ReportOutput],
-        tool_choice={"type": "tool", "name": "ReportOutput"},
+        tool_choice=tool_choice_for("ReportOutput", cfg.llm_provider),
     )
 
     prompt = _build_report_prompt(topic, draft, sources, report_format, limitations)
@@ -316,7 +320,7 @@ def _llm_report(
 
     for attempt in range(1, cfg.max_retries + 2):
         response = llm_with_tool.invoke(messages)
-        in_tokens, out_tokens = _extract_tokens(response)
+        in_tokens, out_tokens = extract_token_usage(response)
         total_in += in_tokens
         total_out += out_tokens
 

@@ -7,14 +7,15 @@ Writes: search_results, loop_count, status, current_queries, token_usage, node_t
 
 from __future__ import annotations
 
+import json
 import time
 from typing import Any
 
-from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, ToolMessage
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from config import AppConfig, DEFAULT_CONFIG
+from llm_factory import extract_token_usage, get_chat_model, has_llm_key, tool_choice_for
 from state import (
     Finding,
     GraphStatus,
@@ -34,6 +35,19 @@ class SearchOutput(BaseModel):
     follow_up_queries: list[str]
     sources: list[Source]
     reasoning: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_stringified_lists(cls, data: Any) -> Any:
+        """Some providers return list fields as JSON strings (e.g. '[]' instead of [])."""
+        if isinstance(data, dict):
+            for key, value in list(data.items()):
+                if isinstance(value, str) and value.startswith("[") and value.endswith("]"):
+                    try:
+                        data[key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        pass
+        return data
 
 
 SEARCH_SYSTEM = (
@@ -57,13 +71,6 @@ def _build_search_prompt(topic: str, queries: list[str], sources: list[Source]) 
         "Suggest follow-up queries if coverage is incomplete. "
         "Include source URLs in each finding."
     )
-
-
-def _extract_tokens(response: Any) -> tuple[int, int]:
-    """Extract (input, output) token counts from an AIMessage's response metadata."""
-    meta = getattr(response, "response_metadata", {}) or {}
-    usage = meta.get("usage", {})
-    return usage.get("input_tokens", 0), usage.get("output_tokens", 0)
 
 
 def _parse_tool_call(response: Any) -> SearchOutput:
@@ -117,14 +124,14 @@ def run_search_agent(
     print(f"[search_agent] fetched {len(sources)} sources ({source_type})")
 
     # --- Step 2: LLM structured extraction ---
-    if not cfg.anthropic_api_key and state.mode != RunMode.DEV:
+    if not has_llm_key(cfg) and state.mode != RunMode.DEV:
         raise RuntimeError(
-            f"{state.mode.value} mode requires ANTHROPIC_API_KEY for LLM extraction"
+            f"{state.mode.value} mode requires a valid API key for LLM extraction"
         )
 
-    if not cfg.anthropic_api_key:
+    if not has_llm_key(cfg):
         # No LLM key — return stub extraction (dev mode only)
-        print("[search_agent] no ANTHROPIC_API_KEY, using stub extraction (dev mode)")
+        print("[search_agent] no LLM key configured, using stub extraction (dev mode)")
         search_output = SearchOutput(
             findings=[
                 Finding(
@@ -179,14 +186,10 @@ def _llm_extract(
     cfg: AppConfig,
 ) -> tuple[SearchOutput, int, int]:
     """Call LLM with tool binding and corrective retry. Returns (output, input_tokens, output_tokens)."""
-    llm = ChatAnthropic(
-        model=cfg.model_name,
-        api_key=cfg.anthropic_api_key,
-        temperature=0,
-    )
+    llm = get_chat_model(cfg)
     llm_with_tool = llm.bind_tools(
         [SearchOutput],
-        tool_choice={"type": "tool", "name": "SearchOutput"},
+        tool_choice=tool_choice_for("SearchOutput", cfg.llm_provider),
     )
 
     prompt = _build_search_prompt(topic, queries, sources)
@@ -196,7 +199,7 @@ def _llm_extract(
 
     for attempt in range(1, cfg.max_retries + 2):  # 1 initial + max_retries
         response = llm_with_tool.invoke(messages)
-        in_tokens, out_tokens = _extract_tokens(response)
+        in_tokens, out_tokens = extract_token_usage(response)
         total_in += in_tokens
         total_out += out_tokens
 
