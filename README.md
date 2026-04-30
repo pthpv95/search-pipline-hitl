@@ -1,6 +1,6 @@
 # Research Assistant with Human-in-the-Loop
 
-A LangGraph-based research pipeline that orchestrates search, synthesis, human review, and report generation. Uses Claude (via `langchain-anthropic`) for search analysis, synthesis, and report writing, with Tavily for web search.
+A LangGraph-based research pipeline that orchestrates search, synthesis, human review, and report generation. LLM-agnostic via a provider abstraction — supports Anthropic Claude and OpenCode Go (GLM‑5, DeepSeek, Kimi, Qwen) out of the box. Uses Tavily for web search.
 
 ## How it works
 
@@ -23,9 +23,16 @@ The pipeline supports three review outcomes after the human interrupt:
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and set your API keys:
-- `ANTHROPIC_API_KEY` — required for Claude LLM calls
-- `TAVILY_API_KEY` — required for live web search (optional in `dev` mode)
+Copy `.env.example` to `.env` and set your API keys.
+
+**LLM provider** — choose one:
+
+| Provider | Env vars |
+|---|---|
+| Anthropic (default) | `ANTHROPIC_API_KEY` |
+| OpenCode Go ($5/month) | `LLM_PROVIDER=opencode_go`, `OPENCODE_GO_API_KEY`, optionally `OPENCODE_GO_MODEL` (default: `glm-5`) |
+
+**Web search:** `TAVILY_API_KEY` — required for live search (optional in `dev` mode).
 
 ## Usage
 
@@ -44,6 +51,10 @@ pytest -v
 
 # Run a specific test file
 pytest tests/test_human_review.py -v
+
+# Web UI (two terminals)
+python server.py                   # Backend :8000
+cd web && npm run dev              # Frontend :5173, proxies /api → :8000
 ```
 
 ### Run modes
@@ -51,7 +62,7 @@ pytest tests/test_human_review.py -v
 | Mode   | Flag         | Behavior                                    |
 |--------|--------------|---------------------------------------------|
 | `dev`  | `--mode dev` | Mock search fallback, no API keys needed    |
-| `live` | `--mode live`| Real Claude + Tavily calls                  |
+| `live` | `--mode live`| Real LLM + Tavily calls                     |
 | `eval` | `--mode eval`| Like live, but tags runs for evaluation     |
 
 ## Project Structure
@@ -61,16 +72,22 @@ pytest tests/test_human_review.py -v
 | `state.py`             | Pydantic state schema (`ResearchState`) and sub-models |
 | `graph.py`             | LangGraph `StateGraph` definition, nodes, and routing |
 | `config.py`            | Environment config and API key loading               |
-| `agents/search.py`     | Search agent — Claude + Tavily web search            |
+| `llm_factory.py`       | Provider abstraction — returns ChatAnthropic or ChatOpenAI |
+| `agents/search.py`     | Search agent — LLM + Tavily web search               |
 | `agents/synthesis.py`  | Synthesis agent — combines findings, detects gaps    |
 | `agents/human_review.py`| Human review node with `interrupt()` for HITL       |
 | `agents/report.py`     | Report agent — generates cited final reports         |
 | `tools/web.py`         | Tavily search wrapper with dev-mode mock fallback    |
 | `run_pipeline.py`      | Non-interactive pipeline runner with auto-approve    |
 | `cli_review.py`        | Interactive CLI for human review                     |
+| `server.py`            | FastAPI backend for the browser UI                   |
+| `api_adapters.py`      | State → JSON DTO transforms for the API              |
+| `api_models.py`        | Pydantic request/response models for the API         |
+| `api_runtime.py`       | In-memory session registry + background graph runner |
+| `web/`                 | React + Vite browser console (run list, pipeline graph, review panel) |
 | `evals/eval.py`        | Score saved runs on citation, source, coverage, etc. |
 | `evals/run_eval_topics.py` | Batch-run the 5 suggested eval topics            |
-| `tests/`               | Test suite (state, graph, agents, human review, evals)|
+| `tests/`               | Test suite (state, graph, agents, human review, evals, server)|
 | `runs/`                | Persisted run artifacts (JSON)                       |
 | `architecture.md`      | Detailed architecture diagram and state model        |
 
@@ -82,18 +99,19 @@ pytest tests/test_human_review.py -v
 
 ## Evaluation and cost tracking
 
-Every run records actual token usage from Claude response metadata, per-node
-elapsed time via `time.perf_counter()`, and an estimated USD cost computed
-from `MODEL_PRICING` in `config.py`. After a run finishes, `run_pipeline.py`
-prints a compact cost summary:
+Every run records actual token usage from LLM response metadata (supports
+both Anthropic and OpenAI‑compatible formats), per-node elapsed time via
+`time.perf_counter()`, and an estimated USD cost computed from `MODEL_PRICING`
+in `config.py`. After a run finishes, `run_pipeline.py` prints a compact
+cost summary:
 
 ```
-Cost summary (model: claude-sonnet-4-20250514)
-  search_agent        2,341 tok    0.84s   ~$0.0234
-  synthesis_agent     1,821 tok    0.51s   ~$0.0182
-  report_agent        3,103 tok    1.27s   ~$0.0310
+Cost summary (model: glm-5)
+  search_agent        6,428 tok    1.99s   ~$0.0189
+  synthesis_agent    13,641 tok    1.66s   ~$0.0334
+  report_agent        4,055 tok    0.75s   ~$0.0159
   ───────────────────────────────────────────────
-  total               7,265 tok    2.62s   ~$0.0726
+  total              24,124 tok    4.40s   ~$0.0682
 ```
 
 To generate a batch of eval-mode runs and score them:
