@@ -2,6 +2,8 @@
 
 A LangGraph-based research pipeline that orchestrates search, synthesis, human review, and report generation. LLM-agnostic via a provider abstraction — supports Anthropic Claude and OpenCode Go (GLM‑5, DeepSeek, Kimi, Qwen) out of the box. Uses Tavily for web search.
 
+![alt text](demo-screenshots/01-landing-page.png)
+
 ## How it works
 
 ```
